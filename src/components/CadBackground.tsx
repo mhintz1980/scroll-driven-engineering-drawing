@@ -10,10 +10,10 @@ const drawings = [
     // Position and size using Tailwind utilities
     className: "top-[10%] left-[5%] w-[50vw] md:w-[35vw]",
     // Animation parameters
-    initialScale: 1,
-    finalScale: 1.4,
+    initialScale: 1.0,
+    finalScale: 1.8,
     fadeEnd: 0.6, // Fades out completely by 60% of the scroll
-    yOffset: 100, // Drifts down 100px
+    yOffset: 200, // Drifts down 100px
   },
   {
     src: "/P000473.jpg",
