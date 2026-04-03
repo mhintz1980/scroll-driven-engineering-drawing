@@ -1,56 +1,77 @@
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, MotionValue } from "framer-motion";
+
+type Drawing = {
+  src: string;
+  alt: string;
+  className: string;
+  initialScale: number;
+  finalScale: number;
+  yOffset: number;
+  fadeInStart?: number;
+  fadeInEnd?: number;
+  fadeOutStart?: number;
+  fadeOutEnd?: number;
+  maxOpacity: number;
+};
 
 // Configuration for each background drawing
-const drawings = [
-  // --- DRAWING 1: Visible immediately (Opted OUT of fade-in) ---
+const drawings: Drawing[] = [
+  // --- DRAWING GROUP 1: Visible immediately (Opted OUT of fade-in) ---
   {
-    src: "/P001382.jpg",
-    alt: "Big Housing",
-    className: "bottom-[0%] left-[30%] w-[20vw] md:w-[35vw]",
-    initialScale: 1,
-    finalScale: 4,
-    yOffset: 100,
-    fadeInStart: 0.25,
-    fadeInEnd: 0.6,
-    maxOpacity: 0.6,
-  },
-  {
-    src: "/P001812.png",
+    src: "/P001812.jpg",
     alt: "Input Shaft",
-    className: "bottom-[25%] left-[23%] w-[20vw] md:w-[35vw]",
+    className: "bottom-[5%] left-[26%] w-[20vw] md:w-[35vw]",
     initialScale: 3,
     finalScale: 0.75,
     yOffset: -500,
-    fadeOutStart: 0.25,
+    fadeOutStart: 0.15,
     fadeOutEnd: 0.7,
-    maxOpacity: 0.2,
+    maxOpacity: 0.25,
   },
-
-  // --- DRAWING 2: Sneaks in later (Opted IN to fade-in) ---
   {
     src: "/P000473.jpg",
     alt: "Output Shaft",
     className: "top-[-0%] left-[0%] w-[20vw] md:w-[35vw]",
-    initialScale: 1.5,
-    finalScale: 4,
+    initialScale: 1.95,
+    finalScale: 6,
     yOffset: 500,
-    // We want this one to sneak in, so we define the fade-in points
-    fadeOutStart: 0.1,
-    fadeOutEnd: 0.6,
+    fadeOutStart: 0.18,
+    fadeOutEnd: 0.5,
     maxOpacity: 0.6,
   },
-
-  // --- DRAWING 3: Another sneaky one ---
   {
     src: "/A000629.jpg",
     alt: "Gearbox Assembly",
-    className: "bottom-[0%] right-[0%] w-[40vw] md:w-[35vw]",
-    initialScale: 2.5,
-    finalScale: 0.5,
-    yOffset: 0,
+    className: "bottom-[0%] right-[0%] w-[40vw] md:w-[40vw]",
+    initialScale: 1.5,
+    finalScale: 4,
+    yOffset: 250,
     fadeOutStart: 0.15,
     fadeOutEnd: 0.5,
-    maxOpacity: 0.25,
+    maxOpacity: 0.35,
+  },
+  // --- DRAWING GROUP 2 We want these to sneak in, so we define the fade-in points
+  {
+    src: "/P000420.jpg",
+    alt: "Intermediate Housing",
+    className: "bottom-[-10%] right-[0%] w-[20vw] md:w-[45vw]",
+    initialScale: 1.2,
+    finalScale: 2.5,
+    yOffset: -200,
+    fadeInStart: 0.25,
+    fadeInEnd: 0.4,
+    maxOpacity: 0.75,
+  },
+  {
+    src: "/P001382.jpg",
+    alt: "Big Housing",
+    className: "bottom-[20%] left-[10%] w-[20vw] md:w-[35vw]",
+    initialScale: 1,
+    finalScale: 3,
+    yOffset: 0,
+    fadeInStart: 0.25,
+    fadeInEnd: 0.6,
+    maxOpacity: 0.85,
   },
 ];
 
@@ -59,11 +80,9 @@ function DrawingLayer({
   drawing,
   scrollYProgress,
 }: {
-  drawing: any;
-  scrollYProgress: any;
+  drawing: Drawing;
+  scrollYProgress: MotionValue<number>;
 }) {
-  // Destructure everything. Notice fadeInStart and fadeInEnd have NO defaults.
-  // If you don't define them in the array, they simply become 'undefined'.
   const {
     src,
     alt,
@@ -73,7 +92,7 @@ function DrawingLayer({
     yOffset,
     fadeInStart,
     fadeInEnd,
-    fadeOutStart, // Still keeping defaults for the exit animation
+    fadeOutStart,
     fadeOutEnd,
     maxOpacity,
   } = drawing;
@@ -85,24 +104,49 @@ function DrawingLayer({
   );
   const y = useTransform(scrollYProgress, [0, 1], [0, yOffset]);
 
-  // THE LOGIC: Does this drawing have BOTH fade-in properties defined?
+  // Dynamically build the scroll timeline based strictly on configured properties
+  const scrollPoints: number[] = [];
+  const opacityPoints: number[] = [];
+
   const hasFadeIn = fadeInStart !== undefined && fadeInEnd !== undefined;
+  const hasFadeOut = fadeOutStart !== undefined && fadeOutEnd !== undefined;
 
-  // Build the timeline arrays based on your opt-in logic
-  const scrollPoints = hasFadeIn
-    ? fadeOutStart > fadeInEnd
-      ? [0, fadeInStart, fadeInEnd, fadeOutStart, fadeOutEnd]
-      : [0, fadeInStart, fadeInEnd]
-    : [0, fadeOutStart, fadeOutEnd];
+  if (hasFadeIn) {
+    scrollPoints.push(0, fadeInStart, fadeInEnd);
+    opacityPoints.push(0, 0, maxOpacity);
+  }
 
-  const opacityPoints = hasFadeIn
-    ? fadeOutStart > fadeInEnd
-      ? [0, 0, maxOpacity, maxOpacity, 0]
-      : [0, 0, maxOpacity]
-    : [maxOpacity, maxOpacity, 0];
+  if (hasFadeOut) {
+    if (!hasFadeIn) {
+      scrollPoints.push(0);
+      opacityPoints.push(maxOpacity);
+    } else if (fadeInEnd !== undefined && fadeOutStart !== undefined && fadeOutStart > fadeInEnd) {
+      // Hold max opacity between fade-in end and fade-out start
+      if (scrollPoints[scrollPoints.length - 1] !== fadeOutStart) {
+        scrollPoints.push(fadeOutStart);
+        opacityPoints.push(maxOpacity);
+      }
+    }
+    scrollPoints.push(fadeOutStart, fadeOutEnd);
+    opacityPoints.push(maxOpacity, 0);
+  }
+
+  if (scrollPoints.length === 0) {
+    scrollPoints.push(0, 1);
+    opacityPoints.push(maxOpacity, maxOpacity);
+  } else {
+    // Explicitly add a point at scroll = 1 if the timeline stops early
+    // This absolutely forces Framer Motion to hold the final interpolated value
+    // rather than doing anything unpredictable at the bottom of the page.
+    const lastScrollValue = scrollPoints[scrollPoints.length - 1];
+    if (lastScrollValue < 1) {
+      scrollPoints.push(1);
+      opacityPoints.push(opacityPoints[opacityPoints.length - 1]);
+    }
+  }
 
   // Feed the dynamically generated timeline to Framer Motion
-  const opacity = useTransform(scrollYProgress, scrollPoints, opacityPoints);
+  const opacity = useTransform(scrollYProgress, scrollPoints, opacityPoints) as MotionValue<number>;
 
   return (
     <motion.div
