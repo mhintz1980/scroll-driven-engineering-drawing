@@ -1,21 +1,59 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-background: #F8F9FA;
+  --color-surface: #FFFFFF;
+  --color-surface-raised: #FAFBFC;
+  --color-primary: #1F2937;
+  --color-secondary: #6B7280;
+  --color-accent-primary: #2563EB;
+  --color-accent-secondary: #3B82F6;
+  --color-accent-warm: #F59E0B;
+  --color-accent-dim: rgba(37, 99, 235, 0.1);
+  --color-cad-line-primary: #3B82F6;
+  --color-cad-line-secondary: #6B7280;
+  --color-cad-dimension: #4B5563;
+  --color-cad-centerline: #6B7280;
+  --color-cad-hidden: #6B7280;
+
+  --font-heading: 'Archivo', 'system-ui', 'sans-serif';
+  --font-body: 'Space Grotesk', 'system-ui', 'sans-serif';
+  --font-mono: 'JetBrains Mono', 'Cascadia Code', 'monospace';
+}
+
+.dark {
+  --color-background: #0F172A;
+  --color-surface: #1E293B;
+  --color-surface-raised: #334155;
+  --color-primary: #F8FAFC;
+  --color-secondary: #94A3B8;
+  --color-accent-primary: #3B82F6;
+  --color-accent-secondary: #60A5FA;
+  --color-accent-warm: #FBBF24;
+  --color-accent-dim: rgba(59, 130, 246, 0.15);
+  --color-cad-line-primary: #60A5FA;
+  --color-cad-line-secondary: #94A3B8;
+  --color-cad-dimension: #CBD5E1;
+  --color-cad-centerline: #94A3B8;
+  --color-cad-hidden: #94A3B8;
+}
 
 @layer base {
   body {
-    @apply bg-background text-primary antialiased;
-    font-family: theme('fontFamily.body');
+    @apply bg-background text-primary antialiased transition-colors duration-300;
+    font-family: var(--font-body);
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply tracking-tight;
-    font-family: theme('fontFamily.heading');
+    font-family: var(--font-heading);
   }
 }
 
 @layer utilities {
-    .glass {
-        @apply bg-white/80 backdrop-blur-md border border-white/50 shadow-sm;
-    }
+  .glass {
+    @apply bg-white/80 backdrop-blur-md border border-white/50 shadow-sm;
+  }
 }

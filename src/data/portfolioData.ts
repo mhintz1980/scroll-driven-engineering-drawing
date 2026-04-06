@@ -211,6 +211,27 @@ export const skillsTickerData = [
   "Planetary Gearboxes"
 ];
 
+export const coreServices = [
+  {
+    title: "Mechanical design that survives the shop floor",
+    description:
+      "SolidWorks assemblies: sheet metal weldments, engine mounts, industrial torque wrenches, lifting structures, and production-ready drawings that reduce rework, confusion, and tribal-knowledge dependency.",
+    tags: ["SolidWorks", "Sheet metal", "GD&T", "DFM/DFA"],
+  },
+  {
+    title: "Manufacturing documentation + release hygiene",
+    description:
+      "BOMs, fabrication drawings, DXFs/flat patterns, revision control, naming/part-number systems, and the boring-but-critical stuff that keeps production from face-planting.",
+    tags: ["BOMs", "PDM", "ASME prints", "DXF/CNC prep"],
+  },
+  {
+    title: "Internal tools + automation (practical, not science-fair)",
+    description:
+      "Lightweight apps and automations that connect the dots between engineering, scheduling, purchasing, and production—so the team can see bottlenecks before they become late shipments.",
+    tags: ["React/TypeScript", "SQL", "Firebase/Supabase", "AI workflows"],
+  },
+];
+
 export const wordCycleData = [
   "AI-driven custom tooling",
   "Production-ready designs",

@@ -1,6 +1,6 @@
 import { motion, useReducedMotion } from 'framer-motion';
 import type { Variants } from 'framer-motion';
-import { portfolioData } from '../../data/portfolioData';
+import { portfolioData, coreServices } from '../../data/portfolioData';
 import { SectionTitle } from '../ui/MagneticText';
 
 export const Services = () => {
@@ -24,6 +24,41 @@ export const Services = () => {
   return (
     <section id="services" className="py-32 w-full max-w-7xl mx-auto px-8 md:px-20 relative z-10">
       <SectionTitle>Services</SectionTitle>
+
+      {/* Core Services Section from older layout */}
+      <motion.div
+        variants={container}
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true, margin: "-100px" }}
+        className="grid grid-cols-1 gap-12 mb-20"
+      >
+        {coreServices.map((service, index) => (
+          <motion.div 
+            key={`core-service-${index}`} 
+            variants={item}
+            className="flex flex-col md:flex-row gap-6 items-start"
+          >
+            <div className="md:w-1/3">
+              <h3 className="text-2xl font-heading font-bold text-primary dark:text-white group-hover:text-accent-primary transition-colors">{service.title}</h3>
+            </div>
+            <div className="md:w-2/3">
+              <p className="text-secondary dark:text-slate-400 leading-relaxed mb-4 text-lg">{service.description}</p>
+              <div className="flex flex-wrap gap-2">
+                {service.tags.map((tag, tIndex) => (
+                  <span key={tIndex} className="px-3 py-1 bg-accent-primary/10 dark:bg-accent-secondary/20 text-accent-primary dark:text-accent-secondary text-sm font-semibold rounded-full font-mono">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </motion.div>
+
+      <div className="mb-12">
+        <h3 className="text-3xl font-heading font-bold mb-4 opacity-50 text-center uppercase tracking-widest">Specialized Capabilities</h3>
+      </div>
 
       <motion.div
         variants={container}

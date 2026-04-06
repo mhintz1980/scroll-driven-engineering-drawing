@@ -1,9 +1,18 @@
-import { motion, useReducedMotion } from 'framer-motion';
-import { portfolioData } from '../../data/portfolioData';
+import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
+import { portfolioData, wordCycleData } from '../../data/portfolioData';
 import { MagneticText } from '../ui/MagneticText';
+import { useState, useEffect } from 'react';
 
 export const Hero = () => {
   const shouldReduceMotion = useReducedMotion();
+  const [currentWord, setCurrentWord] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentWord((prev) => (prev + 1) % wordCycleData.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
 
   const typewriterContainer = {
     hidden: { opacity: 0 },
@@ -47,11 +56,25 @@ export const Hero = () => {
         initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.5 }}
-        className="bg-accent-primary/5 border border-accent-primary/10 rounded-sm p-6 mb-12 max-w-2xl"
+        className="bg-accent-primary/5 border border-accent-primary/10 rounded-sm p-6 mb-12 max-w-3xl"
       >
-        <p className="text-lg md:text-xl font-normal leading-relaxed text-primary">
-          {portfolioData.personal.bio}
-        </p>
+        <div className="text-lg md:text-xl font-normal leading-relaxed text-primary flex flex-wrap gap-x-2">
+          <span>Bridging the gap between SolidWorks design and high-efficiency production through</span>
+          <span className="text-accent-primary font-bold relative inline-flex overflow-hidden h-[1.4em] align-bottom items-center min-w-[280px]">
+            <AnimatePresence mode="popLayout">
+              <motion.span
+                key={wordCycleData[currentWord]}
+                initial={{ y: 30, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: -30, opacity: 0 }}
+                transition={{ duration: 0.5, type: "spring", stiffness: 200, damping: 20 }}
+                className="absolute whitespace-nowrap"
+              >
+                {wordCycleData[currentWord]}
+              </motion.span>
+            </AnimatePresence>
+          </span>
+        </div>
       </motion.div>
 
       <motion.div
@@ -70,7 +93,7 @@ export const Hero = () => {
               text-[15px] rounded-sm transition-all
               ${action.primary 
                 ? 'font-heading font-bold uppercase tracking-widest bg-accent-primary text-white hover:bg-accent-primary/90 hover:-translate-y-0.5 shadow-[0_4px_20px_rgba(37,99,235,0.35)] hover:shadow-[0_6px_28px_rgba(37,99,235,0.45)] border-none'
-                : 'font-semibold bg-white/50 backdrop-blur text-primary border border-secondary/20 hover:border-accent-primary hover:text-accent-primary shadow-sm'}
+                : 'font-semibold bg-white/50 dark:bg-slate-800/50 backdrop-blur text-primary border border-secondary/20 hover:border-accent-primary hover:text-accent-primary shadow-sm'}
             `}
             whileHover={shouldReduceMotion ? {} : { scale: 1.02 }}
             whileTap={shouldReduceMotion ? {} : { scale: 0.98 }}
@@ -84,7 +107,7 @@ export const Hero = () => {
         variants={typewriterContainer}
         initial="hidden"
         animate="visible"
-        className="font-mono text-sm leading-relaxed mt-8 p-6 bg-white/50 backdrop-blur border border-secondary/20 border-l-[3px] border-l-accent-primary rounded-sm shadow-sm max-w-[540px]"
+        className="font-mono text-sm leading-relaxed mt-8 p-6 bg-white/50 dark:bg-slate-800/50 backdrop-blur border border-secondary/20 border-l-[3px] border-l-accent-primary rounded-sm shadow-sm max-w-[540px]"
       >
         <motion.div variants={typewriterChild} className="flex"><span className="text-accent-primary font-medium mr-2">&gt; SPEC:</span> <span className="text-primary">{portfolioData.personal.name}</span></motion.div>
         <motion.div variants={typewriterChild} className="flex"><span className="text-accent-primary font-medium mr-2">&gt; ROLE:</span> <span className="text-primary">Mechanical Designer + Automation Engineer</span></motion.div>
