@@ -1,0 +1,28 @@
+{
+  "name": "mark-hintz-showreel",
+  "version": "1.0.0",
+  "description": "Remotion portfolio showreel for Mark Hintz",
+  "private": true,
+  "scripts": {
+    "studio": "npx remotion studio src/Root.tsx",
+    "render": "npx remotion render src/Root.tsx Showreel out/showreel.mp4 --codec h264",
+    "render:720": "npx remotion render src/Root.tsx Showreel out/showreel-720.mp4 --codec h264",
+    "render:1080": "npx remotion render src/Root.tsx Showreel1080 out/showreel-1080.mp4 --codec h264",
+    "tsc": "npx tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/transitions": "4.0.290",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.290"
+  },
+  "devDependencies": {
+    "@remotion/cli": "^4.0.290",
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "typescript": "5.5.4"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
