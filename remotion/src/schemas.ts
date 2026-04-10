@@ -128,3 +128,29 @@ export const defaultCaseStudiesProps: CaseStudiesProps = {
   sequenceLabelPrefix: "CASE STUDY",
   imageFooterNote: "Each case study is framed as a decision path, not a decorative slide.",
 };
+
+export const SubPictureSchema = z.object({
+  src: z.string(),
+  label: z.string(),
+  datumSymbols: z.array(z.string()).optional(),
+  dimensionLines: z.array(z.object({
+    x1: z.number(), y1: z.number(), x2: z.number(), y2: z.number(), label: z.string().optional()
+  })).optional()
+});
+
+export const ProjectDetailSchema = z.object({
+  projectTitle: z.string(),
+  subPictures: z.array(SubPictureSchema),
+});
+
+export type ProjectDetailProps = z.infer<typeof ProjectDetailSchema>;
+
+export const defaultProjectDetailProps: ProjectDetailProps = {
+  projectTitle: "PUMP PACKAGE: DETAIL RENDERINGS",
+  subPictures: [
+    { src: "assets/images/pump-package-hero.webp", label: "PRIMARY ASSEMBLY", datumSymbols: ["A", "B"] },
+    { src: "assets/images/torque-wrench-hero.webp", label: "INTERNAL GEARBOX", datumSymbols: ["C"] },
+    { src: "assets/images/pumptracker-hero.webp", label: "SOFTWARE HUD", datumSymbols: [] }
+  ]
+};
+

@@ -8,10 +8,12 @@ import {ShowreelRemixVideo} from "./ShowreelRemixVideo";
 import {ShowreelVideo} from "./Video";
 import {ShowreelWithPathsVideo} from "./VideoWithPaths";
 import {ShowreelRemixSchema} from "./remixSchema";
-import {CaseStudiesSchema, ShowreelSchema} from "./schemas";
+import {CaseStudiesSchema, ShowreelSchema, ProjectDetailSchema, defaultProjectDetailProps} from "./schemas";
+import {ProjectDetailVideo} from "./ProjectDetailVideo";
 
 const TOTAL_FRAMES = (8 + 10 + 12 + 12 + 12 + 8) * FPS - 5 * 20;
 const CASE_STUDIES_FRAMES = CASE_STUDIES.length * 12 * FPS - (CASE_STUDIES.length - 1) * 20;
+const SUB_PICTURES_FRAMES = 3 * (4 * FPS) + 2 * 25; // 3 pictures * 4 seconds + 2 transitions (25 frames)
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -201,86 +203,7 @@ export const RemotionRoot: React.FC = () => {
         fps={FPS}
         width={W}
         height={H}
-        defaultProps={{
-          introHeadlineTop: "Mechanical design",
-          introHeadlineAccent: "with manufacturing",
-          introHeadlineBottom: "reality built in",
-          introBody:
-            "Drawings, setup reality, inspection intent, assembly fit, and cost pressure are treated as design inputs rather than afterthoughts.",
-          closingHeadlineTop: "From concept",
-          closingHeadlineBottom: "to floor",
-          closingBody:
-            "Mechanical design informed by manufacturing reality, inspection logic, and lifecycle tradeoffs.",
-          closingSummaryPrimary: "From concept to floor-ready documentation.",
-          closingSummarySecondary:
-            "Software and automation appear as supporting systems proof, not a co-equal identity.",
-          contactEmail: "markworks.dev@gmail.com",
-          projects: [
-            {
-              key: "pump-package",
-              title: "PUMP PACKAGE",
-              subtitle: "Portable pump enclosure and support structure",
-              category: "Mechanical design / sheet metal / DFM",
-              reviewLabel: "PRIMARY SIGNAL",
-              emphasis: "primary",
-              outcome: "ZERO",
-              outcomeLabel: "TOLERANCE FAILURES",
-              image: "assets/images/pump-package-hero.webp",
-              tags: ["Sheet Metal", "Airflow", "Service Access", "DFM / DFA"],
-              problem:
-                "The package had to survive fabrication, fit-up, service access, and operating reality without turning into an expensive build headache.",
-              constraint:
-                "Airflow, sound control, sheet metal logic, structure, and cost pressure all pulled on the geometry at the same time.",
-              decision:
-                "Balanced enclosure form, support structure, access strategy, and fabrication logic so the design stayed buildable and maintainable.",
-              validation:
-                "Presented as floor-ready documentation rather than a concept-only enclosure study.",
-              callouts: ["ASSEMBLY ACCESS", "BEND LOGIC", "AIRFLOW / SOUND"],
-            },
-            {
-              key: "torque-wrench",
-              title: "TORQUE WRENCH",
-              subtitle: "Precision gearbox and high-accuracy assembly context",
-              category: "Precision assemblies / machining / GD&T",
-              reviewLabel: "PRIMARY SIGNAL",
-              emphasis: "primary",
-              outcome: "22%",
-              outcomeLabel: "MFG COST REDUCTION",
-              image: "assets/images/torque-wrench-hero.webp",
-              tags: ["Gearboxes", "Runout", "Heat Treat", "Inspection"],
-              problem:
-                "Precision gearbox components had to hold functional accuracy without inflating machining cost or assembly risk.",
-              constraint:
-                "Runout, heat treat distortion, post-HT cleanup, assembly fit, and process capability all mattered at once.",
-              decision:
-                "Designed for manufacturable precision with inspection intent and post-heat-treat cleanup built into the dimensional strategy.",
-              validation:
-                "The dimensioning logic supported assembly performance, repeatable inspection, and better manufacturing economics.",
-              callouts: ["RUNOUT CONTROL", "POST-HT FINISH", "ASSEMBLY FIT"],
-            },
-            {
-              key: "pumptracker",
-              title: "PUMPTRACKER",
-              subtitle: "Operations software supporting engineering throughput",
-              category: "React / TypeScript / planning systems",
-              reviewLabel: "SECONDARY PROOF",
-              emphasis: "secondary",
-              outcome: "30+ HRS/WEEK",
-              outcomeLabel: "ADMIN TIME RECOVERED",
-              image: "assets/images/pumptracker-hero.webp",
-              tags: ["Planning", "Capacity", "React", "Workflow Support"],
-              problem:
-                "Production visibility was trapped in spreadsheets, inboxes, and tribal knowledge, which slowed scheduling and coordination.",
-              constraint:
-                "The system had to help the floor move faster without replacing the human judgment already driving the operation.",
-              decision:
-                "Built a lightweight planning and capacity layer that made work visible and actionable for the team using it.",
-              validation:
-                "Framed as systems support around real engineering and production work, not as a replacement for that domain knowledge.",
-              callouts: ["FLOW VISIBILITY", "CAPACITY SIGNAL", "SHOP INPUT"],
-            },
-          ],
-        }}
+        defaultProps={{"introHeadlineTop":"Mechanical design","introHeadlineAccent":"with manufacturing","introHeadlineBottom":"reality built in","introBody":"Drawings, setup reality, inspection intent, assembly fit, and cost pressure are treated as design inputs rather than afterthoughts.","closingHeadlineTop":"From concept","closingHeadlineBottom":"to floor","closingBody":"Mechanical design informed by manufacturing reality, inspection logic, and lifecycle tradeoffs.","closingSummaryPrimary":"From concept to floor-ready documentation.","closingSummarySecondary":"Software and automation appear as supporting systems proof, not a co-equal identity.","contactEmail":"markworks.dev@gmail.com","projects":[{"key":"pump-package","title":"PUMP PACKAGE","subtitle":"Portable pump enclosure and support structure","category":"Mechanical design / sheet metal / DFM","reviewLabel":"PRIMARY SIGNAL","emphasis":"primary" as const,"outcome":"ZERO","outcomeLabel":"TOLERANCE FAILURES","image":"assets/images/pump-package-hero.webp","tags":["Sheet Metal","Airflow","Service Access","DFM / DFA"],"problem":"The package had to survive fabrication, fit-up, service access, and operating reality without turning into an expensive build headache.","constraint":"Airflow, sound control, sheet metal logic, structure, and cost pressure all pulled on the geometry at the same time.","decision":"Balanced enclosure form, support structure, access strategy, and fabrication logic so the design stayed buildable and maintainable.","validation":"Presented as floor-ready documentation rather than a concept-only enclosure study.","callouts":["ASSEMBLY ACCESS","BEND LOGIC","AIRFLOW / SOUND"]},{"key":"torque-wrench","title":"TORQUE WRENCH","subtitle":"Precision gearbox and high-accuracy assembly context","category":"Precision assemblies / machining / GD&T","reviewLabel":"PRIMARY SIGNAL","emphasis":"primary" as const,"outcome":"22%","outcomeLabel":"MFG COST REDUCTION","image":"assets/images/torque-wrench-hero.webp","tags":["Gearboxes","Runout","Heat Treat","Inspection"],"problem":"Precision gearbox components had to hold functional accuracy without inflating machining cost or assembly risk.","constraint":"Runout, heat treat distortion, post-HT cleanup, assembly fit, and process capability all mattered at once.","decision":"Designed for manufacturable precision with inspection intent and post-heat-treat cleanup built into the dimensional strategy.","validation":"The dimensioning logic supported assembly performance, repeatable inspection, and better manufacturing economics.","callouts":["RUNOUT CONTROL","POST-HT FINISH","ASSEMBLY FIT"]},{"key":"pumptracker","title":"PUMPTRACKER","subtitle":"Operations software supporting engineering throughput","category":"React / TypeScript / planning systems","reviewLabel":"SECONDARY PROOF","emphasis":"secondary" as const,"outcome":"30+ HRS/WEEK","outcomeLabel":"ADMIN TIME RECOVERED","image":"assets/images/pumptracker-hero.webp","tags":["Planning","Capacity","React","Workflow Support"],"problem":"Production visibility was trapped in spreadsheets, inboxes, and tribal knowledge, which slowed scheduling and coordination.","constraint":"The system had to help the floor move faster without replacing the human judgment already driving the operation.","decision":"Built a lightweight planning and capacity layer that made work visible and actionable for the team using it.","validation":"Framed as systems support around real engineering and production work, not as a replacement for that domain knowledge.","callouts":["FLOW VISIBILITY","CAPACITY SIGNAL","SHOP INPUT"]}]}}
         schema={ShowreelSchema}
       />
       <Composition
