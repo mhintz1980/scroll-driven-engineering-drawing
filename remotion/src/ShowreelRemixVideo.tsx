@@ -48,6 +48,10 @@ export const ShowreelRemixVideo: React.FC<ShowreelRemixProps> = ({
   identityDirection = defaultShowreelRemixProps.identityDirection,
   projectDirections = defaultShowreelRemixProps.projectDirections,
   closingDirection = defaultShowreelRemixProps.closingDirection,
+  introScene = defaultShowreelRemixProps.introScene,
+  identityScene = defaultShowreelRemixProps.identityScene,
+  projectScenes = defaultShowreelRemixProps.projectScenes,
+  closingScene = defaultShowreelRemixProps.closingScene,
 }) => {
   const [projectOneRaw, projectTwoRaw, projectThreeRaw] = projects;
   const {key: _projectOneKey, ...projectOne} = projectOneRaw;
@@ -66,6 +70,7 @@ export const ShowreelRemixVideo: React.FC<ShowreelRemixProps> = ({
             theme={theme}
             overlays={overlays}
             direction={introDirection}
+            sceneOverlay={introScene}
           />
         </TransitionSeries.Sequence>
 
@@ -79,6 +84,7 @@ export const ShowreelRemixVideo: React.FC<ShowreelRemixProps> = ({
             theme={theme}
             overlays={overlays}
             direction={identityDirection}
+            sceneOverlay={identityScene}
           />
         </TransitionSeries.Sequence>
 
@@ -93,7 +99,7 @@ export const ShowreelRemixVideo: React.FC<ShowreelRemixProps> = ({
             theme={theme}
             overlays={overlays}
             direction={projectDirections[0]}
-            projectIndex={0}
+            sceneOverlay={projectScenes[0]}
           />
         </TransitionSeries.Sequence>
 
@@ -108,7 +114,7 @@ export const ShowreelRemixVideo: React.FC<ShowreelRemixProps> = ({
             theme={theme}
             overlays={overlays}
             direction={projectDirections[1]}
-            projectIndex={1}
+            sceneOverlay={projectScenes[1]}
           />
         </TransitionSeries.Sequence>
 
@@ -123,7 +129,7 @@ export const ShowreelRemixVideo: React.FC<ShowreelRemixProps> = ({
             theme={theme}
             overlays={overlays}
             direction={projectDirections[2]}
-            projectIndex={2}
+            sceneOverlay={projectScenes[2]}
           />
         </TransitionSeries.Sequence>
 
@@ -143,6 +149,7 @@ export const ShowreelRemixVideo: React.FC<ShowreelRemixProps> = ({
             theme={theme}
             overlays={overlays}
             direction={closingDirection}
+            sceneOverlay={closingScene}
           />
         </TransitionSeries.Sequence>
       </TransitionSeries>

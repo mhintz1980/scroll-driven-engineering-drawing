@@ -1,6 +1,6 @@
 import {AbsoluteFill, Img, interpolate, staticFile, useCurrentFrame, useVideoConfig} from "remotion";
 import {MARK} from "../../constants";
-import type {RemixOverlayProps, RemixTheme} from "../../remixSchema";
+import type {RemixOverlayProps, RemixSceneOverlay, RemixTheme} from "../../remixSchema";
 import {
   RemixBlueprintField,
   RemixNoiseOverlay,
@@ -13,7 +13,8 @@ export const RemixIdentityCardScene: React.FC<{
   theme: RemixTheme;
   overlays: RemixOverlayProps;
   direction: "left" | "right" | "up" | "down";
-}> = ({theme, overlays, direction}) => {
+  sceneOverlay: RemixSceneOverlay;
+}> = ({theme, overlays, direction, sceneOverlay}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const axis = directionToAxis(direction);
@@ -41,15 +42,26 @@ export const RemixIdentityCardScene: React.FC<{
     >
       <RemixBlueprintField theme={theme} opacity={0.18} cell={58} majorEvery={4} />
       <RemixNoiseOverlay theme={theme} overlays={overlays} />
-      <RemixTracePath
-        theme={theme}
-        overlays={overlays}
-        path="M186 612 L186 170 L480 170"
-        startFrame={8}
-        endFrame={42}
-        label="DOSSIER START"
-      />
-      <RemixReticle theme={theme} overlays={overlays} x={980} y={272} radius={52} />
+      {sceneOverlay.tracePaths.map((tracePath, index) => (
+        <RemixTracePath
+          key={`${tracePath.label ?? "trace"}-${index}`}
+          theme={theme}
+          overlays={overlays}
+          points={tracePath.points}
+          startFrame={tracePath.startFrame}
+          endFrame={tracePath.endFrame}
+          label={tracePath.label}
+        />
+      ))}
+      {sceneOverlay.reticle ? (
+        <RemixReticle
+          theme={theme}
+          overlays={overlays}
+          x={sceneOverlay.reticle.x}
+          y={sceneOverlay.reticle.y}
+          radius={sceneOverlay.reticle.radius}
+        />
+      ) : null}
 
       <div
         style={{

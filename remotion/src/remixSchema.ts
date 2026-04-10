@@ -47,6 +47,29 @@ const OverlaySchema = z.object({
   reticleOpacity: z.number(),
 });
 
+const TracePointSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+});
+
+const TracePathSchema = z.object({
+  label: z.string().optional(),
+  startFrame: z.number(),
+  endFrame: z.number(),
+  points: z.array(TracePointSchema).min(2),
+});
+
+const ReticleSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+  radius: z.number().optional(),
+});
+
+const SceneOverlaySchema = z.object({
+  tracePaths: z.array(TracePathSchema),
+  reticle: ReticleSchema.optional(),
+});
+
 export const ShowreelRemixSchema = z.object({
   introHeadlineTop: z.string(),
   introHeadlineAccent: z.string(),
@@ -65,11 +88,18 @@ export const ShowreelRemixSchema = z.object({
   identityDirection: MotionDirectionSchema,
   projectDirections: z.array(MotionDirectionSchema).length(3),
   closingDirection: MotionDirectionSchema,
+  introScene: SceneOverlaySchema,
+  identityScene: SceneOverlaySchema,
+  projectScenes: z.array(SceneOverlaySchema).length(3),
+  closingScene: SceneOverlaySchema,
 });
 
 export type RemixTheme = z.infer<typeof RemixThemeSchema>;
 export type RemixOverlayProps = z.infer<typeof OverlaySchema>;
 export type RemixProject = z.infer<typeof ProjectSchema>;
+export type RemixTracePathConfig = z.infer<typeof TracePathSchema>;
+export type RemixReticleConfig = z.infer<typeof ReticleSchema>;
+export type RemixSceneOverlay = z.infer<typeof SceneOverlaySchema>;
 export type ShowreelRemixProps = z.infer<typeof ShowreelRemixSchema>;
 
 export const defaultShowreelRemixProps: ShowreelRemixProps = {
@@ -179,4 +209,110 @@ export const defaultShowreelRemixProps: ShowreelRemixProps = {
   identityDirection: "left",
   projectDirections: ["up", "down", "up"],
   closingDirection: "right",
+  introScene: {
+    tracePaths: [
+      {
+        points: [
+          {x: 84, y: 138},
+          {x: 356, y: 138},
+          {x: 356, y: 246},
+          {x: 692, y: 246},
+        ],
+        startFrame: 6,
+        endFrame: 52,
+        label: "REVISION PATH",
+      },
+      {
+        points: [
+          {x: 1098, y: 102},
+          {x: 1098, y: 260},
+          {x: 924, y: 260},
+        ],
+        startFrame: 26,
+        endFrame: 74,
+        label: "FIELD REGISTER",
+      },
+    ],
+    reticle: {x: 1040, y: 548, radius: 56},
+  },
+  identityScene: {
+    tracePaths: [
+      {
+        points: [
+          {x: 186, y: 612},
+          {x: 186, y: 170},
+          {x: 480, y: 170},
+        ],
+        startFrame: 8,
+        endFrame: 42,
+        label: "DOSSIER START",
+      },
+    ],
+    reticle: {x: 980, y: 272, radius: 52},
+  },
+  projectScenes: [
+    {
+      tracePaths: [
+        {
+          points: [
+            {x: 76, y: 612},
+            {x: 300, y: 612},
+            {x: 300, y: 144},
+            {x: 588, y: 144},
+          ],
+          startFrame: 12,
+          endFrame: 58,
+          label: "PRIMARY REVIEW",
+        },
+      ],
+      reticle: {x: 330, y: 210, radius: 48},
+    },
+    {
+      tracePaths: [
+        {
+          points: [
+            {x: 1206, y: 108},
+            {x: 934, y: 108},
+            {x: 934, y: 596},
+            {x: 722, y: 596},
+          ],
+          startFrame: 12,
+          endFrame: 58,
+          label: "PRIMARY REVIEW",
+        },
+      ],
+      reticle: {x: 974, y: 500, radius: 48},
+    },
+    {
+      tracePaths: [
+        {
+          points: [
+            {x: 76, y: 612},
+            {x: 300, y: 612},
+            {x: 300, y: 144},
+            {x: 588, y: 144},
+          ],
+          startFrame: 12,
+          endFrame: 58,
+          label: "SUPPORTING SYSTEM",
+        },
+      ],
+      reticle: {x: 330, y: 210, radius: 48},
+    },
+  ],
+  closingScene: {
+    tracePaths: [
+      {
+        points: [
+          {x: 168, y: 94},
+          {x: 1120, y: 94},
+          {x: 1120, y: 632},
+          {x: 916, y: 632},
+        ],
+        startFrame: 0,
+        endFrame: 52,
+        label: "CLOSING PASS",
+      },
+    ],
+  },
 };

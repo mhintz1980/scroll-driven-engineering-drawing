@@ -1,7 +1,12 @@
 import {AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig} from "remotion";
 import {MARK} from "../../constants";
 import {TypewriterText} from "../../components/AnimationPrimitives";
-import type {RemixOverlayProps, RemixTheme, ShowreelRemixProps} from "../../remixSchema";
+import type {
+  RemixOverlayProps,
+  RemixSceneOverlay,
+  RemixTheme,
+  ShowreelRemixProps,
+} from "../../remixSchema";
 import {
   RemixBlueprintField,
   RemixNoiseOverlay,
@@ -19,6 +24,7 @@ type RemixBlueprintGridSceneProps = Pick<
   theme: RemixTheme;
   overlays: RemixOverlayProps;
   direction: "left" | "right" | "up" | "down";
+  sceneOverlay: RemixSceneOverlay;
 };
 
 export const RemixBlueprintGridScene: React.FC<RemixBlueprintGridSceneProps> = ({
@@ -29,6 +35,7 @@ export const RemixBlueprintGridScene: React.FC<RemixBlueprintGridSceneProps> = (
   theme,
   overlays,
   direction,
+  sceneOverlay,
 }) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
@@ -58,23 +65,26 @@ export const RemixBlueprintGridScene: React.FC<RemixBlueprintGridSceneProps> = (
     >
       <RemixBlueprintField theme={theme} opacity={0.24} cell={56} majorEvery={4} />
       <RemixNoiseOverlay theme={theme} overlays={overlays} />
-      <RemixTracePath
-        theme={theme}
-        overlays={overlays}
-        path="M84 138 L356 138 L356 246 L692 246"
-        startFrame={6}
-        endFrame={52}
-        label="REVISION PATH"
-      />
-      <RemixTracePath
-        theme={theme}
-        overlays={overlays}
-        path="M1098 102 L1098 260 L924 260"
-        startFrame={26}
-        endFrame={74}
-        label="FIELD REGISTER"
-      />
-      <RemixReticle theme={theme} overlays={overlays} x={1040} y={548} radius={56} />
+      {sceneOverlay.tracePaths.map((tracePath, index) => (
+        <RemixTracePath
+          key={`${tracePath.label ?? "trace"}-${index}`}
+          theme={theme}
+          overlays={overlays}
+          points={tracePath.points}
+          startFrame={tracePath.startFrame}
+          endFrame={tracePath.endFrame}
+          label={tracePath.label}
+        />
+      ))}
+      {sceneOverlay.reticle ? (
+        <RemixReticle
+          theme={theme}
+          overlays={overlays}
+          x={sceneOverlay.reticle.x}
+          y={sceneOverlay.reticle.y}
+          radius={sceneOverlay.reticle.radius}
+        />
+      ) : null}
 
       <div
         style={{

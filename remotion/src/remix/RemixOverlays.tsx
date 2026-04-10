@@ -2,7 +2,13 @@ import {noise2D} from "@remotion/noise";
 import {getLength, getPointAtLength} from "@remotion/paths";
 import {interpolate, useCurrentFrame} from "remotion";
 import {H, W} from "../constants";
-import type {RemixOverlayProps, RemixTheme} from "../remixSchema";
+import type {RemixOverlayProps, RemixTheme, RemixTracePathConfig} from "../remixSchema";
+
+export const tracePointsToSvgPath = (points: RemixTracePathConfig["points"]): string => {
+  return points
+    .map((point, index) => `${index === 0 ? "M" : "L"}${point.x} ${point.y}`)
+    .join(" ");
+};
 
 export const RemixBlueprintField: React.FC<{
   theme: RemixTheme;
@@ -100,12 +106,13 @@ export const RemixNoiseOverlay: React.FC<{
 export const RemixTracePath: React.FC<{
   theme: RemixTheme;
   overlays: RemixOverlayProps;
-  path: string;
+  points: RemixTracePathConfig["points"];
   startFrame?: number;
   endFrame?: number;
   label?: string;
-}> = ({theme, overlays, path, startFrame = 0, endFrame = 30, label}) => {
+}> = ({theme, overlays, points, startFrame = 0, endFrame = 30, label}) => {
   const frame = useCurrentFrame();
+  const path = tracePointsToSvgPath(points);
   const length = getLength(path);
   const progress = interpolate(frame, [startFrame, endFrame], [0, 1], {
     extrapolateLeft: "clamp",

@@ -7,7 +7,7 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import type {RemixOverlayProps, RemixProject, RemixTheme} from "../../remixSchema";
+import type {RemixOverlayProps, RemixProject, RemixSceneOverlay, RemixTheme} from "../../remixSchema";
 import {
   RemixBlueprintField,
   RemixNoiseOverlay,
@@ -21,7 +21,7 @@ export const RemixProjectScene: React.FC<
     theme: RemixTheme;
     overlays: RemixOverlayProps;
     direction: "left" | "right" | "up" | "down";
-    projectIndex?: number;
+    sceneOverlay: RemixSceneOverlay;
   }
 > = ({
   title,
@@ -41,7 +41,7 @@ export const RemixProjectScene: React.FC<
   theme,
   overlays,
   direction,
-  projectIndex = 0,
+  sceneOverlay,
 }) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
@@ -82,21 +82,26 @@ export const RemixProjectScene: React.FC<
     >
       <RemixBlueprintField theme={theme} opacity={0.14} cell={66} majorEvery={4} />
       <RemixNoiseOverlay theme={theme} overlays={overlays} />
-      <RemixTracePath
-        theme={theme}
-        overlays={overlays}
-        path={projectIndex % 2 === 0 ? "M76 612 L300 612 L300 144 L588 144" : "M1206 108 L934 108 L934 596 L722 596"}
-        startFrame={12}
-        endFrame={58}
-        label={emphasis === "primary" ? "PRIMARY REVIEW" : "SUPPORTING SYSTEM"}
-      />
-      <RemixReticle
-        theme={theme}
-        overlays={overlays}
-        x={projectIndex % 2 === 0 ? 330 : 974}
-        y={projectIndex % 2 === 0 ? 210 : 500}
-        radius={48}
-      />
+      {sceneOverlay.tracePaths.map((tracePath, index) => (
+        <RemixTracePath
+          key={`${tracePath.label ?? "trace"}-${index}`}
+          theme={theme}
+          overlays={overlays}
+          points={tracePath.points}
+          startFrame={tracePath.startFrame}
+          endFrame={tracePath.endFrame}
+          label={tracePath.label}
+        />
+      ))}
+      {sceneOverlay.reticle ? (
+        <RemixReticle
+          theme={theme}
+          overlays={overlays}
+          x={sceneOverlay.reticle.x}
+          y={sceneOverlay.reticle.y}
+          radius={sceneOverlay.reticle.radius}
+        />
+      ) : null}
 
       <div
         style={{
@@ -154,7 +159,7 @@ export const RemixProjectScene: React.FC<
                 color: theme.textSecondary,
               }}
             >
-              <span>{`Project .0${projectIndex + 1}`}</span>
+              <span>{category}</span>
               <span>{reviewLabel}</span>
             </div>
 

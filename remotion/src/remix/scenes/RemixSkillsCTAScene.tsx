@@ -1,6 +1,11 @@
 import {AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig} from "remotion";
 import {MARK, SKILLS_TICKER} from "../../constants";
-import type {RemixOverlayProps, RemixTheme, ShowreelRemixProps} from "../../remixSchema";
+import type {
+  RemixOverlayProps,
+  RemixSceneOverlay,
+  RemixTheme,
+  ShowreelRemixProps,
+} from "../../remixSchema";
 import {
   RemixBlueprintField,
   RemixNoiseOverlay,
@@ -20,6 +25,7 @@ type RemixSkillsCTASceneProps = Pick<
   theme: RemixTheme;
   overlays: RemixOverlayProps;
   direction: "left" | "right" | "up" | "down";
+  sceneOverlay: RemixSceneOverlay;
 };
 
 export const RemixSkillsCTAScene: React.FC<RemixSkillsCTASceneProps> = ({
@@ -32,6 +38,7 @@ export const RemixSkillsCTAScene: React.FC<RemixSkillsCTASceneProps> = ({
   theme,
   overlays,
   direction,
+  sceneOverlay,
 }) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
@@ -56,14 +63,17 @@ export const RemixSkillsCTAScene: React.FC<RemixSkillsCTASceneProps> = ({
     >
       <RemixBlueprintField theme={theme} opacity={0.18} cell={64} majorEvery={4} />
       <RemixNoiseOverlay theme={theme} overlays={overlays} />
-      <RemixTracePath
-        theme={theme}
-        overlays={overlays}
-        path="M168 94 L1120 94 L1120 632 L916 632"
-        startFrame={0}
-        endFrame={52}
-        label="CLOSING PASS"
-      />
+      {sceneOverlay.tracePaths.map((tracePath, index) => (
+        <RemixTracePath
+          key={`${tracePath.label ?? "trace"}-${index}`}
+          theme={theme}
+          overlays={overlays}
+          points={tracePath.points}
+          startFrame={tracePath.startFrame}
+          endFrame={tracePath.endFrame}
+          label={tracePath.label}
+        />
+      ))}
 
       <div
         style={{
