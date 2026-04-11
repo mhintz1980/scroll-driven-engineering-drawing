@@ -2,129 +2,231 @@
 
 Date: 2026-04-10
 Repo: `mark-hintz-portfolio_bg-cad`
-Scope: Remotion remix status, portfolio placement decisions, current risks, and next-session startup
+Scope: current pushed state, active uncommitted work, and the next Remotion-first task
 
-## Remotion Status
+## Current Repo State
 
-The Remotion remix exists and is registered in the same Studio as the original showreel.
+Two important commits were created this session:
 
-Primary files:
-- `remotion/src/Root.tsx`
-- `remotion/src/ShowreelRemixVideo.tsx`
+- `3d1baf5` — pushed to `origin/remotion-showreel`
+  - adds the `ProjectDetailVideo` Remotion scaffold
+  - includes the April 10 handoff docs and reticle Lottie asset
+- `8d608ac` — local commit on `remotion-showreel`
+  - adds portfolio project gallery/detail behavior
+  - makes Remix trace paths and reticles Studio-editable via schema/default props
+
+Verified during this session:
+
+- `npm test -- src/components/sections/projects-media.test.ts`
+- `npm run build`
+- `cd remotion && npm run tsc`
+- `cd remotion && npx remotion compositions src/Root.tsx`
+- fresh Studio load of `ShowreelRemix` succeeded after restart
+
+## What Changed This Session
+
+### 1. Portfolio project galleries now work
+
+Files:
+- `src/components/sections/Projects.tsx`
+- `src/components/sections/projects-media.ts`
+- `src/components/sections/projects-media.test.ts`
+
+What it does:
+- uses the existing `gallery` arrays already present in project data
+- adds inline expandable media/detail viewing inside each project card
+- keeps the CAD parallax background intact
+
+### 2. Remix trace linework is now Studio-editable
+
+Files:
 - `remotion/src/remixSchema.ts`
-- `remotion/src/remix/remixTheme.ts`
+- `remotion/src/ShowreelRemixVideo.tsx`
 - `remotion/src/remix/RemixOverlays.tsx`
 - `remotion/src/remix/scenes/RemixBlueprintGridScene.tsx`
 - `remotion/src/remix/scenes/RemixIdentityCardScene.tsx`
 - `remotion/src/remix/scenes/RemixProjectScene.tsx`
 - `remotion/src/remix/scenes/RemixSkillsCTAScene.tsx`
+- `remotion/src/Root.tsx`
 
-Current remix direction:
-- industrial monochrome shell
-- restrained blueprint-blue accents for path traces and emphasis
-- project/work imagery stays in color
-- same manufacturing-first narrative as the original reel
+What it does:
+- moves remix trace paths from hard-coded SVG strings in scene code into schema/default-prop data
+- exposes per-scene `tracePaths[]` and optional `reticle` configs in Studio
+- lets future sessions adjust path points, labels, and timing without re-authoring scene internals
 
-## Remotion Debugging Outcome
+New Studio-editable areas in the Remix:
+- `introScene.tracePaths[]`
+- `identityScene.tracePaths[]`
+- `projectScenes[]`
+- `closingScene.tracePaths[]`
+- each trace now has:
+  - `points`
+  - `startFrame`
+  - `endFrame`
+  - `label`
+- each scene can also have an optional `reticle` with:
+  - `x`
+  - `y`
+  - `radius`
 
-The Studio checkerboard / blank-screen issue was fixed.
+## FIRST TASK FOR NEXT SESSION
 
-Root causes found:
-- remix scene roots used plain `div` containers instead of `AbsoluteFill`
-- a syntax / HMR issue in `remotion/src/VideoWithPaths.tsx` could poison Studio state
+Replace the current resume-image segment in the video with animated resume-derived typography.
 
-Important behavior note:
-- if Studio looks stale or broken, stop it and restart `npm run studio`
-- a hard refresh may still be needed after HMR issues
+### Goal
 
-## Verification Evidence
+The section that currently shows Mark's resume as an image should instead use resume language as motion content:
 
-These commands passed in the session:
-- `cd remotion && npm run tsc`
-- `cd remotion && npx remotion compositions src/Root.tsx`
-- `cd remotion && npx remotion still src/Root.tsx ShowreelRemix /tmp/showreel-remix-color-verify.png --frame=923`
+- words and short phrases should animate across that part of the frame
+- the emphasis should be on key terms and strong fragments, not full explanatory sentences
+- motion can include:
+  - fading in / fading out
+  - drifting off-screen
+  - scaling up toward the viewer until it leaves the viewport
+  - scaling down or moving away until it becomes unreadable / no longer dominant
 
-## Portfolio Findings
+### Content Direction
 
-The main site is a separate Vite app under `src/`, not `remotion/`.
+Source material should come directly from the resume, especially:
 
-Relevant files:
-- `src/App.tsx`
-- `src/components/sections/Hero.tsx`
-- `src/components/sections/Projects.tsx`
-- `src/data/portfolioData.ts`
-- `src/components/CadBackground.tsx`
+- `Profile`
+- `Expertise`
+- selected phrases from bullet items
 
-Best placement for video:
-- a short loop section between `Hero` and `Projects`
+Good content examples:
+- short authority phrases
+- key nouns and verbs
+- manufacturing-first proof language
+- process/inspection/tolerance/manufacturing terms
 
-Do not replace the CAD parallax background:
-- it is already strong and should stay
-- it should not become a full autoplay background video right now
+Bad content examples:
+- whole resume paragraphs moving as giant unreadable blocks
+- software-first phrasing that overpowers the mechanical/manufacturing signal
+- fully contextual explanatory copy that belongs elsewhere in the reel
 
-## Project Media State
+### Creative Rule
 
-The project data already has gallery arrays, but the UI does not use them yet.
+Key words should dominate the animation.
 
-Project gallery data exists in:
-- `src/data/portfolioData.ts`
+The purpose of this segment is:
+- density
+- authority
+- visual rhythm
+- manufacturing-first credibility
 
-Current limitation:
-- `src/components/sections/Projects.tsx` only renders each project's single hero image
+It is **not**:
+- a verbatim resume reading
+- a wall of text
+- a substitute for the other narrative scenes
 
-Recommended next portfolio move:
-- build a project detail / expandable gallery pattern that uses the existing `gallery` arrays
-- place additional images, drawings, exploded views, and CAD captures inside the relevant project
+### Recommended Implementation Shape
 
-## Onshape Opportunity
+Most likely target:
+- the Remix identity/resume-adjacent segment
 
-Mark now has Onshape available outside the office and can generate additional portfolio media.
+Recommended pattern:
+- create a schema-driven text cluster system similar to the new editable trace-path system
+- expose word groups, timing, position, scale range, opacity range, and motion mode through Studio-editable props
+- keep the scene modular so Mark can iterate in Studio instead of recoding every typography pass
 
-Best candidate media:
-- exploded assembly captures
-- slow CAD orbit loops
-- drawing pans / detail-sheet motion
-- side-by-side render + CAD/model pairings
+Good editable data model ideas:
+- `text`
+- `x`
+- `y`
+- `startFrame`
+- `endFrame`
+- `fontSize`
+- `weight`
+- `opacityFrom`
+- `opacityTo`
+- `scaleFrom`
+- `scaleTo`
+- `driftX`
+- `driftY`
+- optional emphasis color or mono/accent toggle
 
-Strongest subject priority:
-1. torque tool / planetary gearbox work
-2. pump package assemblies
-3. firearm-related work if framed cleanly and professionally
+## Important Context To Preserve
 
-## Positioning Rules
+Positioning hierarchy must remain:
 
-Preserve:
-- `Design + Manufacturing Bridge`
-- manufacturing-first signal
-- software and automation as supporting proof only
+- primary: manufacturable mechanical design credibility
+- supporting: tolerance, inspection, assembly, lifecycle judgment
+- secondary: software and automation as leverage, not identity
 
-Avoid:
-- generic mechanical designer framing
+Do not drift toward:
+- generic mechanical designer branding
 - software-first identity
 - abstract systems branding detached from fabrication reality
 
-## Parallel Work Note
+## Current Working Tree
 
-A Claude Code prompt was written for portfolio implementation, and the user said Claude is now working.
+At the moment of writing, `git status --short` shows:
 
-Implication for next session:
-- check git status first
-- inspect diffs before touching portfolio UI files
-- avoid colliding with whatever Claude changed
+- `M docs/plans/2026-04-10-session-handoff.md`
+- `M remotion/src/Root.tsx`
+- `M src/App.tsx`
+- `M src/components/sections/Projects.tsx`
+- `M src/components/sections/Services.tsx`
+- `?? src/components/sections/EngineeringReel.tsx`
 
-## Docs Added During Session
+Interpretation:
 
-- `docs/superpowers/plans/2026-04-09-showreel-remix.md`
-- `docs/plans/2026-04-10-showreel-remix-and-portfolio-media-handoff.md`
-- `docs/plans/2026-04-10-session-handoff.md`
+- `Root.tsx` is likely from the editable-remix-trace work and should be read before changing any Remix defaults
+- `Projects.tsx` is likely related to the local gallery work and should not be casually reverted
+- `Services.tsx` includes the CTA dark-mode contrast fix
+- `App.tsx` and `EngineeringReel.tsx` are currently messy/unfinished and should be inspected carefully before deciding whether to keep, revert, or finish that section
 
-## Recommended Next Steps
+Important:
+- do not assume the `EngineeringReel.tsx` placeholder belongs in the final portfolio
+- do not revert unrelated work without checking ownership first
 
-1. check repo status and identify Claude's changes
-2. inspect portfolio UI diffs before editing overlapping files
-3. if needed, implement or refine:
-   - short loop section between `Hero` and `Projects`
-   - project gallery/detail experience using existing gallery arrays
-4. prepare a capture plan for new Onshape media
-5. commit only after reviewing ownership of all modified files
+## Files Worth Reading First Next Session
 
+Read these in order:
+
+1. `/home/markimus/projects/Portfolio/AGENTS.md`
+2. `docs/context/mark-agent-onboarding.md`
+3. `docs/context/remotion-parallel-work-map.md`
+4. `docs/plans/2026-04-08-remotion-showreel-strategy-and-handoff.md`
+5. `docs/plans/2026-04-08-remotion-showreel-visual-grammar-and-scene-plan.md`
+6. `docs/plans/2026-04-09-remotion-showreel-next-session-handoff.md`
+7. `docs/plans/2026-04-10-showreel-remix-and-portfolio-media-handoff.md`
+8. this file
+
+Then inspect:
+
+- `remotion/src/remixSchema.ts`
+- `remotion/src/ShowreelRemixVideo.tsx`
+- `remotion/src/remix/RemixOverlays.tsx`
+- `remotion/src/remix/scenes/RemixIdentityCardScene.tsx`
+- `remotion/src/Root.tsx`
+
+## Skills To Use Next Session
+
+Use these skills explicitly:
+
+- `brainstorming`
+  - before designing the resume-text animation treatment
+- `remotion-video-toolkit`
+  - for scene timing, animation architecture, and Remotion implementation patterns
+- `remotion-best-practices`
+  - for disciplined Remotion structure and animation hygiene
+- `systematic-debugging`
+  - immediately if Studio/HMR starts misbehaving again
+- `verification-before-completion`
+  - before claiming the new resume-text segment is done
+
+Optional but likely useful:
+
+- `remotion-script-writer`
+  - if the resume-derived text clusters need a stronger content-selection pass before implementation
+
+## Known Behavior Note
+
+If Remotion Studio shows stale or broken behavior:
+
+1. stop the Studio process
+2. restart `npm run studio`
+3. hard refresh the browser
+
+The earlier `registerRoot()` error reproduced as a stale Studio/HMR state, not as an actual duplicate `registerRoot()` call in the codebase.

@@ -7,12 +7,12 @@ import { buildProjectMediaItems } from './projects-media';
 
 export const Projects = () => {
   const shouldReduceMotion = useReducedMotion();
-  const [expandedProjectIndex, setExpandedProjectIndex] = useState<number | null>(0);
+  const [expandedProjectIndex, setExpandedProjectIndex] = useState<number | null>(null);
   const [activeMediaByProject, setActiveMediaByProject] = useState<Record<string, number>>({});
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
-    visible: { 
+    visible: {
       opacity: 1,
       transition: { staggerChildren: 0.15, delayChildren: 0.2 }
     }
@@ -31,8 +31,8 @@ export const Projects = () => {
   return (
     <section id="projects" className="py-32 w-full max-w-7xl mx-auto px-8 md:px-20 relative z-10">
       <SectionTitle>Projects</SectionTitle>
-      
-      <motion.div 
+
+      <motion.div
         variants={containerVariants}
         initial="hidden"
         whileInView="visible"
@@ -50,27 +50,12 @@ export const Projects = () => {
               key={index}
               variants={itemVariants}
               whileHover={shouldReduceMotion ? {} : { y: -8 }}
-              className={`
-                group relative flex flex-col bg-surface overflow-hidden rounded-sm
-                border border-secondary/10 shadow-sm transition-shadow hover:shadow-xl
-                ${project.featured ? 'md:col-span-2' : ''}
-              `}
+              className="group relative flex flex-col bg-surface overflow-hidden rounded-sm border border-secondary/10 shadow-sm transition-shadow hover:shadow-xl"
             >
-            {/* The CAD Tolerance decoration overlay for featured projects */}
-            {project.featured && (
-              <div className="absolute top-4 right-4 z-20 pointer-events-none hidden md:block">
-                <div className="bg-surface/80 backdrop-blur-md border border-accent-secondary/50 text-accent-secondary p-2 text-xs font-mono shadow-sm">
-                  <div>[REF] PRODUCTION SCALE</div>
-                  <div className="border-t border-accent-secondary/30 my-1"></div>
-                  <div>AUTOMATION: 100%</div>
-                </div>
-              </div>
-            )}
-
-            <div className={`relative flex flex-col ${project.featured ? 'md:flex-row' : ''}`}>
-            <div className={`relative overflow-hidden ${project.featured ? 'md:w-1/2' : 'w-full'} aspect-[16/10] bg-background`}>
-              <motion.img 
-                src={`${import.meta.env.BASE_URL}${activeMedia.src}`} 
+            <div className="relative flex flex-col">
+            <div className="relative overflow-hidden w-full aspect-[16/10] bg-background">
+              <motion.img
+                src={`${import.meta.env.BASE_URL}${activeMedia.src}`}
                 alt={project.title}
                 className="w-full h-full object-cover"
                 whileHover={shouldReduceMotion ? {} : { scale: 1.05 }}
@@ -82,8 +67,8 @@ export const Projects = () => {
                 <div className="mt-1 text-accent-primary">{activeMedia.sequence} / {String(mediaItems.length).padStart(2, '0')}</div>
               </div>
             </div>
-            
-            <div className={`p-8 flex flex-col justify-between flex-1 ${project.featured ? 'md:w-1/2' : ''}`}>
+
+            <div className="p-8 flex flex-col justify-between flex-1">
               <div>
                 <h3 className="text-2xl font-heading font-bold mb-2 group-hover:text-accent-primary transition-colors">
                   {project.title}
@@ -93,8 +78,8 @@ export const Projects = () => {
                 </p>
                 <div className="flex flex-wrap gap-2 mb-8">
                   {project.tags.map((tag, tagIndex) => (
-                    <span 
-                      key={tagIndex} 
+                    <span
+                      key={tagIndex}
                       className="px-2.5 py-1 text-xs font-medium bg-secondary/10 text-primary rounded-sm tracking-wide"
                     >
                       {tag}
@@ -102,7 +87,7 @@ export const Projects = () => {
                   ))}
                 </div>
               </div>
-              
+
               {project.outcome && (
                 <div className="flex items-start gap-3 p-4 bg-emerald-50 dark:bg-emerald-950/30 text-primary border-l-2 border-emerald-500 rounded-r-sm">
                   <span className="text-emerald-500 flex-shrink-0 mt-0.5">→</span>

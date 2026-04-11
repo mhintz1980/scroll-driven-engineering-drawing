@@ -35,7 +35,6 @@ export const portfolioData = {
       title: "PumpTracker (Production Scheduling + Capacity Planning)",
       category: "Internal tool • React/TypeScript • Firebase/Supabase",
       image: "assets/images/pumptracker-hero.webp",
-      featured: true,
       outcome: "Eliminated manual scheduling — 30+ hrs/week recovered",
       tags: ["React", "TypeScript", "Supabase", "Firebase", "AI Workflows"],
       gallery: [
