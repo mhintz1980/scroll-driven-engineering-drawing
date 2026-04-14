@@ -9,6 +9,203 @@ import {
 } from "../RemixOverlays";
 import {directionToAxis, directionToSign, getRemixBackground, remixFonts} from "../remixTheme";
 
+const ResumeTextCloud: React.FC<{
+  theme: RemixTheme;
+  sceneOverlay: RemixSceneOverlay;
+}> = ({theme, sceneOverlay}) => {
+  const frame = useCurrentFrame();
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        overflow: "hidden",
+        border: `1px solid ${theme.border}`,
+        background: `radial-gradient(circle at 20% 20%, ${theme.accentSoft} 0%, transparent 30%)`,
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          inset: 18,
+          border: `1px dashed ${theme.border}`,
+          opacity: 0.38,
+        }}
+      />
+      {sceneOverlay.resumeTextBlocks?.map((block, index) => {
+        const opacity = interpolate(
+          frame,
+          [block.startFrame, block.startFrame + 10, block.endFrame - 12, block.endFrame],
+          [block.opacityFrom, block.opacityTo, block.opacityTo, 0],
+          {
+            extrapolateLeft: "clamp",
+            extrapolateRight: "clamp",
+          },
+        );
+        const translateX = interpolate(frame, [block.startFrame, block.endFrame], [0, block.driftX], {
+          extrapolateLeft: "clamp",
+          extrapolateRight: "clamp",
+        });
+        const translateY = interpolate(frame, [block.startFrame, block.endFrame], [0, block.driftY], {
+          extrapolateLeft: "clamp",
+          extrapolateRight: "clamp",
+        });
+        const scale = interpolate(frame, [block.startFrame, block.endFrame], [block.scaleFrom, block.scaleTo], {
+          extrapolateLeft: "clamp",
+          extrapolateRight: "clamp",
+        });
+        const extraScale =
+          block.movement === "scale-up" ? interpolate(frame, [block.startFrame, block.endFrame], [1, 1.12], {
+            extrapolateLeft: "clamp",
+            extrapolateRight: "clamp",
+          }) : block.movement === "scale-down" ? interpolate(frame, [block.startFrame, block.endFrame], [1, 0.92], {
+            extrapolateLeft: "clamp",
+            extrapolateRight: "clamp",
+          }) : 1;
+
+        const color =
+          block.emphasis === "hero" ? theme.text : block.emphasis === "accent" ? theme.accent : theme.textSecondary;
+        const letterSpacing =
+          block.emphasis === "hero" ? "-0.04em" : block.emphasis === "accent" ? "0.04em" : "0.12em";
+
+        return (
+          <div
+            key={`${block.text}-${index}`}
+            style={{
+              position: "absolute",
+              left: `${block.x * 100}%`,
+              top: `${block.y * 100}%`,
+              transform: `translate(${translateX}px, ${translateY}px) rotate(${block.rotate}deg) scale(${scale * extraScale})`,
+              transformOrigin: "center",
+              opacity,
+              fontFamily: remixFonts.mono,
+              fontSize: block.fontSize,
+              fontWeight: block.emphasis === "support" ? 500 : 700,
+              letterSpacing,
+              textTransform: "uppercase",
+              color,
+              whiteSpace: "nowrap",
+              textShadow:
+                block.emphasis === "hero" ? `0 0 22px ${theme.accentSoft}` : "none",
+            }}
+          >
+            {block.text}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+const IdentityImageViewport: React.FC<{
+  theme: RemixTheme;
+  sceneOverlay: RemixSceneOverlay;
+}> = ({theme, sceneOverlay}) => {
+  const frame = useCurrentFrame();
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        overflow: "hidden",
+        border: `1px solid ${theme.border}`,
+        background: theme.panelStrong,
+      }}
+    >
+      {sceneOverlay.imageSequence?.map((image, index) => {
+        const fadeInEnd = Math.min(image.startFrame + 12, image.endFrame);
+        const fadeOutStart = Math.max(image.endFrame - 12, image.startFrame);
+        const opacity = interpolate(
+          frame,
+          [image.startFrame, fadeInEnd, fadeOutStart, image.endFrame],
+          [0, image.opacity, image.opacity, 0],
+          {
+            extrapolateLeft: "clamp",
+            extrapolateRight: "clamp",
+          },
+        );
+        const scale = interpolate(frame, [image.startFrame, image.endFrame], [image.scaleFrom, image.scaleTo], {
+          extrapolateLeft: "clamp",
+          extrapolateRight: "clamp",
+        });
+
+        return (
+          <div
+            key={`${image.src}-${index}`}
+            style={{
+              position: "absolute",
+              inset: 0,
+              opacity,
+              transform: `scale(${scale})`,
+              transformOrigin: "center center",
+            }}
+          >
+            <Img
+              src={staticFile(image.src)}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                filter: "saturate(0.88) contrast(1.02) brightness(0.78)",
+              }}
+            />
+          </div>
+        );
+      })}
+
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "linear-gradient(180deg, rgba(3, 3, 3, 0.18) 0%, rgba(3, 3, 3, 0.04) 26%, rgba(3, 3, 3, 0.38) 100%)",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: `radial-gradient(circle at 20% 22%, transparent 0%, transparent 34%, ${theme.bgDeep} 100%)`,
+          mixBlendMode: "multiply",
+          opacity: 0.82,
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          inset: 18,
+          border: `1px dashed ${theme.border}`,
+          opacity: 0.34,
+          pointerEvents: "none",
+        }}
+      />
+
+      <div
+        style={{
+          position: "absolute",
+          left: 18,
+          top: 16,
+          padding: "10px 12px 8px",
+          border: `1px solid ${theme.border}`,
+          background: "rgba(0, 0, 0, 0.46)",
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 14,
+          fontFamily: remixFonts.mono,
+          fontSize: 10,
+          letterSpacing: "0.16em",
+          textTransform: "uppercase",
+          color: theme.textMuted,
+        }}
+      >
+        <span>Rendering viewport</span>
+        <span>MH-2026-RMX</span>
+      </div>
+    </div>
+  );
+};
+
 export const RemixIdentityCardScene: React.FC<{
   theme: RemixTheme;
   overlays: RemixOverlayProps;
@@ -27,7 +224,7 @@ export const RemixIdentityCardScene: React.FC<{
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const photoOpacity = interpolate(frame, [fps * 1.1, fps * 2.4], [0, 1], {
+  const cloudOpacity = interpolate(frame, [fps * 1.1, fps * 2.4], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
@@ -219,57 +416,15 @@ export const RemixIdentityCardScene: React.FC<{
           </div>
         </div>
 
-        <div style={{display: "flex", flexDirection: "column", gap: 14}}>
-          <div
-            style={{
-              padding: "14px 16px",
-              border: `1px solid ${theme.border}`,
-              background: theme.panelStrong,
-              display: "flex",
-              justifyContent: "space-between",
-              fontFamily: remixFonts.mono,
-              fontSize: 10,
-              letterSpacing: "0.16em",
-              textTransform: "uppercase",
-              color: theme.textMuted,
-            }}
-          >
-            <span>Candidate profile</span>
-            <span>MH-2026-RMX</span>
-          </div>
-
-          <div
-            style={{
-              position: "relative",
-              flex: 1,
-              overflow: "hidden",
-              border: `1px solid ${theme.border}`,
-              background: theme.panel,
-              opacity: photoOpacity,
-            }}
-          >
-            <Img
-              src={staticFile("assets/images/profile.webp")}
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                filter: "grayscale(1) contrast(1.08) brightness(0.9)",
-                transform: `scale(${interpolate(frame, [0, fps * 8], [1.08, 1], {
-                  extrapolateLeft: "clamp",
-                  extrapolateRight: "clamp",
-                })})`,
-              }}
-            />
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                background:
-                  "linear-gradient(180deg, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.32) 34%, rgba(0,0,0,0.7) 100%)",
-              }}
-            />
-          </div>
+        <div
+          style={{
+            position: "relative",
+            minHeight: 0,
+            opacity: cloudOpacity,
+          }}
+        >
+          <IdentityImageViewport theme={theme} sceneOverlay={sceneOverlay} />
+          <ResumeTextCloud theme={theme} sceneOverlay={sceneOverlay} />
         </div>
       </div>
     </AbsoluteFill>

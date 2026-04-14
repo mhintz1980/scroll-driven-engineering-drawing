@@ -1,5 +1,6 @@
 import {zTextarea} from "@remotion/zod-types";
 import {z} from "zod";
+import {defaultResumeTextBlocks} from "./remix/resumeText";
 
 const ProjectSchema = z.object({
   key: z.string(),
@@ -65,9 +66,38 @@ const ReticleSchema = z.object({
   radius: z.number().optional(),
 });
 
+const ResumeTextBlockSchema = z.object({
+  text: z.string(),
+  emphasis: z.enum(["hero", "accent", "support"]),
+  movement: z.enum(["drift", "scale-up", "scale-down"]),
+  x: z.number(),
+  y: z.number(),
+  startFrame: z.number(),
+  endFrame: z.number(),
+  fontSize: z.number(),
+  rotate: z.number(),
+  opacityFrom: z.number(),
+  opacityTo: z.number(),
+  scaleFrom: z.number(),
+  scaleTo: z.number(),
+  driftX: z.number(),
+  driftY: z.number(),
+});
+
+const IdentityImageSchema = z.object({
+  src: z.string(),
+  startFrame: z.number(),
+  endFrame: z.number(),
+  scaleFrom: z.number(),
+  scaleTo: z.number(),
+  opacity: z.number(),
+});
+
 const SceneOverlaySchema = z.object({
   tracePaths: z.array(TracePathSchema),
   reticle: ReticleSchema.optional(),
+  resumeTextBlocks: z.array(ResumeTextBlockSchema).optional(),
+  imageSequence: z.array(IdentityImageSchema).optional(),
 });
 
 export const ShowreelRemixSchema = z.object({
@@ -249,6 +279,49 @@ export const defaultShowreelRemixProps: ShowreelRemixProps = {
       },
     ],
     reticle: {x: 980, y: 272, radius: 52},
+    imageSequence: [
+      {
+        src: "assets/images/rendering-02.webp",
+        startFrame: 0,
+        endFrame: 72,
+        scaleFrom: 1,
+        scaleTo: 1.08,
+        opacity: 0.94,
+      },
+      {
+        src: "assets/images/rendering-07.webp",
+        startFrame: 60,
+        endFrame: 132,
+        scaleFrom: 1.01,
+        scaleTo: 1.1,
+        opacity: 0.94,
+      },
+      {
+        src: "assets/images/pump-package-01.webp",
+        startFrame: 120,
+        endFrame: 192,
+        scaleFrom: 1.02,
+        scaleTo: 1.11,
+        opacity: 0.94,
+      },
+      {
+        src: "assets/images/rendering-09.webp",
+        startFrame: 180,
+        endFrame: 252,
+        scaleFrom: 1.01,
+        scaleTo: 1.09,
+        opacity: 0.94,
+      },
+      {
+        src: "assets/images/pumptracker_light_mode_composite_1775435494270.png",
+        startFrame: 240,
+        endFrame: 300,
+        scaleFrom: 1.02,
+        scaleTo: 1.12,
+        opacity: 0.94,
+      },
+    ],
+    resumeTextBlocks: defaultResumeTextBlocks,
   },
   projectScenes: [
     {
