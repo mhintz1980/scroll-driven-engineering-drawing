@@ -43,6 +43,17 @@ export const getNextProjectMediaIndex = (
   return (getProjectMediaIndex(currentIndex, mediaCount) + 1) % mediaCount;
 };
 
+export const getPreviousProjectMediaIndex = (
+  currentIndex: number | undefined,
+  mediaCount: number,
+) => {
+  if (mediaCount <= 1) {
+    return 0;
+  }
+
+  return (getProjectMediaIndex(currentIndex, mediaCount) - 1 + mediaCount) % mediaCount;
+};
+
 export const getProjectMediaAutoplayDelay = (projectIndex: number) => {
   if (projectIndex < 0 || Number.isNaN(projectIndex)) {
     return PROJECT_MEDIA_AUTOPLAY_MS;

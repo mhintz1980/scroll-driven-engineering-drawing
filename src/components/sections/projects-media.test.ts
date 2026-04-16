@@ -4,6 +4,7 @@ import {
   buildProjectMediaItems,
   getProjectMediaAutoplayDelay,
   getNextProjectMediaIndex,
+  getPreviousProjectMediaIndex,
   getProjectMediaIndex,
 } from "./projects-media";
 
@@ -99,6 +100,21 @@ describe("getNextProjectMediaIndex", () => {
   it("stays on the first frame when there is only one or zero items", () => {
     expect(getNextProjectMediaIndex(0, 1)).toBe(0);
     expect(getNextProjectMediaIndex(2, 0)).toBe(0);
+  });
+});
+
+describe("getPreviousProjectMediaIndex", () => {
+  it("moves back to the prior frame when one exists", () => {
+    expect(getPreviousProjectMediaIndex(2, 4)).toBe(1);
+  });
+
+  it("wraps to the final frame when moving back from the first frame", () => {
+    expect(getPreviousProjectMediaIndex(0, 4)).toBe(3);
+  });
+
+  it("stays on the first frame when there is only one or zero items", () => {
+    expect(getPreviousProjectMediaIndex(0, 1)).toBe(0);
+    expect(getPreviousProjectMediaIndex(2, 0)).toBe(0);
   });
 });
 

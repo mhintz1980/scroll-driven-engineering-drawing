@@ -1,11 +1,12 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import type { Variants } from 'framer-motion';
-import { useEffect, useEffectEvent } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import {
   buildProjectMediaItems,
   getProjectMediaAutoplayDelay,
   getNextProjectMediaIndex,
   getProjectMediaIndex,
+  getPreviousProjectMediaIndex,
   type ProjectMediaItem,
 } from './projects-media';
 
@@ -38,39 +39,90 @@ const ProjectCardMediaHero = ({
   projectTitle,
   totalFrames,
   shouldReduceMotion,
+  canPaginate,
+  isLifted,
+  onHoverChange,
+  onSelectNext,
+  onSelectPrevious,
 }: {
   item: ProjectMediaItem;
   projectTitle: string;
   totalFrames: number;
   shouldReduceMotion: boolean;
+  canPaginate: boolean;
+  isLifted: boolean;
+  onHoverChange: (isHovered: boolean) => void;
+  onSelectNext: () => void;
+  onSelectPrevious: () => void;
 }) => (
-  <div className="relative overflow-hidden w-full aspect-[16/10] bg-background">
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.img
-        key={item.src}
-        src={resolveProjectMediaSrc(item.src)}
-        alt={projectTitle}
-        className="absolute inset-0 h-full w-full object-cover"
-        initial={{ opacity: 0 }}
-        animate={{
-          opacity: 1,
-          scale: shouldReduceMotion ? 1 : 1.02,
-        }}
-        exit={{ opacity: 0 }}
-        whileHover={shouldReduceMotion ? {} : { scale: 1.05 }}
-        transition={{
-          opacity: { duration: 0.65, ease: 'easeInOut' },
-          scale: { duration: 0.65, ease: 'easeOut' },
-        }}
-      />
-    </AnimatePresence>
-    <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors duration-300" />
-    <div className="absolute left-4 top-4 bg-surface/85 backdrop-blur-md border border-accent-primary/20 px-3 py-2 text-[11px] font-mono uppercase tracking-[0.16em] text-primary shadow-sm">
-      <div className="text-secondary">Media Frame</div>
-      <div className="mt-1 text-accent-primary">
-        {item.sequence} / {formatFrameCount(totalFrames)}
+  <div
+    className="relative z-20 w-full aspect-[16/10]"
+    onMouseEnter={() => onHoverChange(true)}
+    onMouseLeave={() => onHoverChange(false)}
+  >
+    <motion.div
+      className="absolute inset-0 origin-top"
+      animate={
+        shouldReduceMotion
+          ? { scale: 1, y: 0 }
+          : isLifted
+            ? { scale: 1.08, y: -18 }
+            : { scale: 1.01, y: 0 }
+      }
+      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <div
+        className={`relative h-full w-full overflow-hidden bg-background ${
+          isLifted
+            ? 'rounded-sm border border-accent-primary/15 shadow-[0_30px_90px_rgba(8,12,18,0.42)]'
+            : 'border-b border-secondary/10'
+        }`}
+      >
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.img
+            key={item.src}
+            src={resolveProjectMediaSrc(item.src)}
+            alt={projectTitle}
+            className="absolute inset-0 h-full w-full object-cover"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, scale: shouldReduceMotion ? 1 : 1.02 }}
+            exit={{ opacity: 0 }}
+            transition={{
+              opacity: { duration: 0.65, ease: 'easeInOut' },
+              scale: { duration: 0.65, ease: 'easeOut' },
+            }}
+          />
+        </AnimatePresence>
+        <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors duration-300" />
+        <div className="absolute left-4 top-4 z-10 bg-surface/85 backdrop-blur-md border border-accent-primary/20 px-3 py-2 text-[11px] font-mono uppercase tracking-[0.16em] text-primary shadow-sm">
+          <div className="text-secondary">Media Frame</div>
+          <div className="mt-1 text-accent-primary">
+            {item.sequence} / {formatFrameCount(totalFrames)}
+          </div>
+        </div>
+
+        {canPaginate ? (
+          <>
+            <button
+              type="button"
+              aria-label={`Show previous ${projectTitle} image`}
+              onClick={onSelectPrevious}
+              className="absolute left-4 top-1/2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-white/12 bg-black/55 text-white/80 opacity-0 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-accent-primary/35 hover:bg-black/68 hover:text-accent-primary focus-visible:opacity-100 group-hover:opacity-100"
+            >
+              <span className="font-mono text-base">←</span>
+            </button>
+            <button
+              type="button"
+              aria-label={`Show next ${projectTitle} image`}
+              onClick={onSelectNext}
+              className="absolute right-4 top-1/2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-white/12 bg-black/55 text-white/80 opacity-0 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-accent-primary/35 hover:bg-black/68 hover:text-accent-primary focus-visible:opacity-100 group-hover:opacity-100"
+            >
+              <span className="font-mono text-base">→</span>
+            </button>
+          </>
+        ) : null}
       </div>
-    </div>
+    </motion.div>
   </div>
 );
 
@@ -147,11 +199,18 @@ export const ProjectCard = ({
   shouldReduceMotion,
   variants,
 }: ProjectCardProps) => {
+  const [isMediaHovered, setIsMediaHovered] = useState(false);
   const mediaItems = buildProjectMediaItems(project);
   const activeMediaIndex = getProjectMediaIndex(selectedMediaIndex, mediaItems.length);
   const activeMedia = mediaItems[activeMediaIndex];
   const autoplayDelay = getProjectMediaAutoplayDelay(projectIndex);
   const advanceHeroMedia = useEffectEvent(() => {
+    onSelectMedia(getNextProjectMediaIndex(activeMediaIndex, mediaItems.length));
+  });
+  const selectPreviousMedia = useEffectEvent(() => {
+    onSelectMedia(getPreviousProjectMediaIndex(activeMediaIndex, mediaItems.length));
+  });
+  const selectNextMedia = useEffectEvent(() => {
     onSelectMedia(getNextProjectMediaIndex(activeMediaIndex, mediaItems.length));
   });
 
@@ -169,18 +228,31 @@ export const ProjectCard = ({
     };
   }, [autoplayDelay, mediaItems.length, shouldReduceMotion]);
 
+  useEffect(() => {
+    if (shouldReduceMotion) {
+      setIsMediaHovered(false);
+    }
+  }, [shouldReduceMotion]);
+
   return (
     <motion.div
       variants={variants}
       whileHover={shouldReduceMotion ? {} : { y: -8 }}
-      className="group relative flex flex-col overflow-hidden rounded-sm border border-secondary/10 bg-surface shadow-sm transition-shadow hover:shadow-xl"
+      className={`group relative flex flex-col rounded-sm transition-shadow ${
+        isMediaHovered ? 'z-40' : 'z-10'
+      }`}
     >
-      <div className="relative flex flex-col">
+      <div className="relative flex flex-col rounded-sm border border-secondary/10 bg-surface shadow-sm transition-shadow hover:shadow-xl">
         <ProjectCardMediaHero
           item={activeMedia}
           projectTitle={project.title}
           totalFrames={mediaItems.length}
           shouldReduceMotion={shouldReduceMotion}
+          canPaginate={mediaItems.length > 1}
+          isLifted={!shouldReduceMotion && isMediaHovered}
+          onHoverChange={setIsMediaHovered}
+          onSelectNext={selectNextMedia}
+          onSelectPrevious={selectPreviousMedia}
         />
 
         <div className="flex flex-1 flex-col justify-between p-8">
