@@ -22,7 +22,7 @@ export const Navbar = () => {
       )}
     >
       <a 
-        href="#top" 
+        href="/#top" 
         className="font-heading font-semibold text-lg uppercase tracking-wider text-primary whitespace-nowrap"
       >
         {portfolioData.personal.name}

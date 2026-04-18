@@ -122,7 +122,7 @@ export const Services = () => {
         <h3 className="text-3xl md:text-4xl font-heading font-bold mb-4 text-white">Hard problem? Rough drawing?</h3>
         <p className="text-lg text-slate-300 mb-8 max-w-2xl mx-auto">Skip the back-and-forth. Send me what you have, and let's see if we can engineer a cleaner solution.</p>
         <a 
-          href="#contact" 
+          href="/#contact" 
           className="inline-block rounded-sm bg-white px-8 py-4 uppercase font-bold tracking-widest text-slate-950 transition-transform hover:scale-105 hover:bg-slate-100"
         >
           Start the Conversation

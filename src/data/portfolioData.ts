@@ -18,15 +18,15 @@ export const portfolioData = {
   },
 
   navigation: [
-    { label: "About", href: "#about" },
-    { label: "Projects", href: "#projects" },
-    { label: "Services", href: "#services" },
-    { label: "Case Studies", href: "#case-studies" },
-    { label: "Contact", href: "#contact" }
+    { label: "About", href: "/#about" },
+    { label: "Projects", href: "/#projects" },
+    { label: "Services", href: "/#services" },
+    { label: "Case Studies", href: "/#case-studies" },
+    { label: "Contact", href: "/#contact" }
   ],
 
   heroActions: [
-    { label: "Let's Talk Work", href: "#contact", primary: true },
+    { label: "Let's Talk Work", href: "/#contact", primary: true },
     { label: "LinkedIn", href: "https://linkedin.com/in/mark-hintz-builds", target: "_blank" }
   ],
 
@@ -120,7 +120,7 @@ export const portfolioData = {
         "Drawing package automation"
       ],
       rate: "Starting at $85/hr · Fixed-price projects available",
-      cta: { label: "Get a quote →", href: "#contact" }
+      cta: { label: "Get a quote →", href: "/#contact" }
     },
     {
       title: "AI Integration",
@@ -133,7 +133,7 @@ export const portfolioData = {
         "Intelligent design review tooling"
       ],
       rate: "Starting at $100/hr · Premium niche",
-      cta: { label: "Discuss your project →", href: "#contact" }
+      cta: { label: "Discuss your project →", href: "/#contact" }
     },
     {
       title: "Design Review & DFM",
@@ -146,7 +146,7 @@ export const portfolioData = {
         "Drawing package audit"
       ],
       rate: "Starting at $75/hr · Per-drawing packages available",
-      cta: { label: "Request a review →", href: "#contact" }
+      cta: { label: "Request a review →", href: "/#contact" }
     }
   ],
 
