@@ -59,8 +59,8 @@ export const Hero = () => {
         className="bg-accent-primary/5 border border-accent-primary/10 rounded-sm p-6 mb-12 max-w-3xl"
       >
         <div className="text-lg md:text-xl font-normal leading-relaxed text-primary">
-          Bridging the gap between SolidWorks design and high-efficiency production through{' '}
-          <span className="text-accent-primary font-bold relative inline-flex overflow-hidden h-[1.25em] align-baseline items-baseline min-w-[280px] ml-1 translate-y-[0.5em]">
+          I design mechanical systems and build software and AI tools that make work{' '}
+          <span className="text-accent-primary font-bold relative inline-flex overflow-hidden h-[1.25em] align-baseline items-baseline min-w-[240px] ml-1 translate-y-[0.5em]">
             <AnimatePresence mode="popLayout">
               <motion.span
                 key={wordCycleData[currentWord]}
@@ -110,7 +110,7 @@ export const Hero = () => {
         className="font-mono text-sm leading-relaxed mt-8 p-6 bg-white/50 dark:bg-slate-800/50 backdrop-blur border border-secondary/20 border-l-[3px] border-l-accent-primary rounded-sm shadow-sm max-w-[540px]"
       >
         <motion.div variants={typewriterChild} className="flex"><span className="text-accent-primary font-medium mr-2">&gt; SPEC:</span> <span className="text-primary">{portfolioData.personal.name}</span></motion.div>
-        <motion.div variants={typewriterChild} className="flex"><span className="text-accent-primary font-medium mr-2">&gt; ROLE:</span> <span className="text-primary">Mechanical Designer + Automation Engineer</span></motion.div>
+        <motion.div variants={typewriterChild} className="flex"><span className="text-accent-primary font-medium mr-2">&gt; ROLE:</span> <span className="text-primary">Mechanical Designer + Systems Builder</span></motion.div>
         <motion.div variants={typewriterChild} className="flex"><span className="text-accent-primary font-medium mr-2">&gt; TOL:</span> <span className="text-primary">±0.0005&quot; | 15 YRS | JAX, FL</span></motion.div>
         <motion.div variants={typewriterChild} className="flex"><span className="text-accent-primary font-medium mr-2">&gt; STATUS:</span> <span className="text-emerald-500 font-medium animate-pulse">AVAILABLE FOR WORK</span></motion.div>
         <motion.div variants={typewriterChild} className="flex"><span className="text-accent-primary font-medium mr-2">&gt; STACK:</span> <span className="text-primary">SolidWorks · PDM · Python · AI Tooling</span></motion.div>

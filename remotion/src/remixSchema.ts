@@ -133,18 +133,18 @@ export type RemixSceneOverlay = z.infer<typeof SceneOverlaySchema>;
 export type ShowreelRemixProps = z.infer<typeof ShowreelRemixSchema>;
 
 export const defaultShowreelRemixProps: ShowreelRemixProps = {
-  introHeadlineTop: "Mechanical design",
-  introHeadlineAccent: "manufacturing systems",
-  introHeadlineBottom: "under load",
+  introHeadlineTop: "Built from the",
+  introHeadlineAccent: "shop floor",
+  introHeadlineBottom: "up.",
   introBody:
-    "The same engineering review narrative, remixed through a harder monochrome field with trace overlays, reversed motion, and inspection-first framing.",
-  closingHeadlineTop: "Built for",
-  closingHeadlineBottom: "the floor",
+    "I design mechanical systems and build software and AI tools that make work faster, clearer, and more capable.",
+  closingHeadlineTop: "Design that",
+  closingHeadlineBottom: "survives production",
   closingBody:
-    "Design intent, fabrication logic, assembly fit, and inspection visibility stay connected from first concept through release.",
-  closingSummaryPrimary: "Industrial remix with the same manufacturing-first thesis.",
+    "Tolerances that hold after heat treat. Assemblies that fit up the first time. Documentation the shop can actually use — and software that makes the whole operation run sharper.",
+  closingSummaryPrimary: "Design + Manufacturing Bridge. Software as operational proof.",
   closingSummarySecondary:
-    "Software and automation remain secondary evidence, while the visual language shifts toward high-contrast review-sheet motion.",
+    "15 years of fabrication reality, inspection logic, and assembly awareness inform every drawing released.",
   contactEmail: "markworks.dev@gmail.com",
   projects: [
     {

@@ -67,16 +67,16 @@ export const TOTAL_FRAMES =
 export const MARK = {
   superHeader: "// DESIGN + MANUFACTURING BRIDGE",
   name: "MARK HINTZ",
-  headline: "MECHANICAL DESIGN WITH MANUFACTURING REALITY BUILT IN.",
-  primaryTagline: "From concept to floor-ready documentation.",
+  headline: "I DESIGN MECHANICAL SYSTEMS AND BUILD SOFTWARE AND AI TOOLS THAT MAKE WORK FASTER, CLEARER, AND MORE CAPABLE.",
+  primaryTagline: "Built from the shop floor up.",
   secondaryTagline:
-    "Assembly, inspection, tolerance risk, and cost pressure inform the design upstream.",
+    "15 years of tolerances, heat treat decisions, and assembly realities inform every design before a drawing is released.",
   softwareTagline:
-    "Software and automation appear as supporting systems proof, not a co-equal identity.",
+    "Software and AI tools appear as operational proof — faster decisions, not a co-equal identity.",
   location: "JAX, FL",
   experience: "15+ YRS",
   tolerance: "±0.0005\"",
-  dossierLabel: "Operator-designer with shop-floor context",
+  dossierLabel: "Designer with 15 years of fabrication, inspection, and assembly context",
   focusAreas: [
     "DFM / DFA",
     "GD&T / Inspection",
@@ -86,19 +86,19 @@ export const MARK = {
   credentials: [
     {
       label: "Manufacturing context",
-      value: "Machine setup, programming support, fabrication reality",
+      value: "7-axis mill-turn support, fabrication reality, and shop-floor inspection",
     },
     {
       label: "Inspection logic",
-      value: "Metrology, creative fixturing, tolerance intent",
+      value: "High-end digital gages, sin blocks, and tolerance intent — not just callouts",
     },
     {
       label: "Assembly awareness",
-      value: "Fit, service access, sequence, failure prevention",
+      value: "Built the gearboxes by hand. Pressed pins through planetary stages. Knows what fails.",
     },
     {
       label: "Systems support",
-      value: "Operational software and automation where it helps throughput",
+      value: "AI tools and operational software that make engineering decisions faster and more visible",
     },
   ],
 } as const;

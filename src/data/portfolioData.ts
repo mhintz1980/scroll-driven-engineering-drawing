@@ -1,19 +1,19 @@
 export const portfolioData = {
   personal: {
     name: "Mark Hintz",
-    superHeader: "// MECHANICAL SYSTEMS & AUTOMATION",
+    superHeader: "// DESIGN + MANUFACTURING BRIDGE",
     title: {
-      line1: "Precision Engineering.",
-      line2: "Automated Logic."
+      line1: "Built from the",
+      line2: "shop floor up."
     },
-    bio: "I automate the work that shouldn't be manual.",
+    bio: "I design mechanical systems and build software and AI tools that make work faster, clearer, and more capable.",
     about:
-      "Mechanical designer and modern toolmaker with experience in diesel-powered industrial pump systems, sound-attenuated enclosures, firearms and related accessories, and the design/development of planetary reduction gearboxes that power industrial tooling. I work at the intersection of hardware and software: designing real-world equipment in SolidWorks, supporting machine shops, fabrication, and assembly—while building AI-powered tools that reduce friction in engineering, documentation, and troubleshooting. I'm especially interested in roles that value practical, field-ready design plus smarter internal tools and workflows.",
+      "I've spent 15 years where design meets fabrication reality — planetary gearboxes built to ±0.0005\" and tested by hand, pump packages that had to survive welding, assembly, and field use, and firearms components toleranced for function, not just geometry. I've operated and supported 7-axis mill-turn centers, inspected with height gages and sin blocks where most shops would call for a CMM, and quoted jobs from single parts to 100-piece assemblies. When the manufacturing side is solid, the software layer gets sharper too — I build AI tools and internal systems that make engineering decisions faster and more visible across the operation.",
     location: "Jacksonville, FL",
     email: "markworks.dev@gmail.com",
     phone: "(904) 862-1945",
     linkedin: "https://linkedin.com/in/mark-hintz-builds",
-    footerCTA: "Let's create something awesome.",
+    footerCTA: "Ready to build something that actually holds tolerance?",
     copyright: `© ${new Date().getFullYear()} Mark Hintz. All rights reserved.`
   },
 
@@ -112,7 +112,7 @@ export const portfolioData = {
     {
       title: "CAD Automation",
       subtitle: "SolidWorks · PDM · Design Tables",
-      description: "Stop doing manually what a macro can do in seconds. I build SolidWorks automation that eliminates repetitive tasks, enforces standards, and lets your engineers focus on engineering.",
+      description: "If your engineers are dragging drawing trees by hand, your tools aren't working hard enough. I build macros, API hooks, and design table systems that cut repetitive CAD work down to seconds and enforce standards without chasing people.",
       deliverables: [
         "SolidWorks macros & API automation",
         "PDM Vault workflow optimization",
@@ -125,7 +125,7 @@ export const portfolioData = {
     {
       title: "AI Integration",
       subtitle: "Python · Claude SDK · Custom Tooling",
-      description: "The rare engineer who can build the AI tool AND understand the mechanical context it operates in. Custom agents, workflow automation, and intelligent tooling for engineering environments.",
+      description: "Most AI tools are built by people who have never held a drawing package. I understand the mechanical context first, then build the tool around it — custom agents, intelligent documentation systems, and workflow automation that fits how engineering shops actually run.",
       deliverables: [
         "Custom AI agents for engineering workflows",
         "Natural language interfaces for CAD/PDM systems",
@@ -138,7 +138,7 @@ export const portfolioData = {
     {
       title: "Design Review & DFM",
       subtitle: "SolidWorks · GD&T · Manufacturing Feedback",
-      description: "15+ years on the shop floor means I catch what CAD-only designers miss. DFM/DFA analysis, drawing package review, tolerance stack-up — delivered as actionable redlines.",
+      description: "I've assembled the gearboxes, run the parts through inspection, and quoted the job. That background changes the DFM conversation — I'm not guessing what the shop will hate, I've been the one dealing with it. Delivered as actionable redlines, not a lecture.",
       deliverables: [
         "DFM/DFA analysis & redlines",
         "GD&T review & correction",
@@ -206,7 +206,7 @@ export const portfolioData = {
 
   footerCredits: [
     "Designed + built by Mark Hintz",
-    "SolidWorks brain, JavaScript hands"
+    "±0.0005\" on the floor. TypeScript in the chair."
   ]
 };
 
@@ -227,27 +227,27 @@ export const skillsTickerData = [
 
 export const coreServices = [
   {
-    title: "Mechanical design that survives the shop floor",
+    title: "Mechanical design with fabrication built in",
     description:
-      "SolidWorks assemblies: sheet metal weldments, engine mounts, industrial torque wrenches, lifting structures, and production-ready drawings that reduce rework, confusion, and tribal-knowledge dependency.",
+      "SolidWorks assemblies designed by someone who's built them — sheet metal that bends cleanly, weldments that fit up right, gearbox components toleranced through heat treat, and drawings that give the shop what it actually needs to make the part correctly.",
     tags: ["SolidWorks", "Sheet metal", "GD&T", "DFM/DFA"],
   },
   {
-    title: "Manufacturing documentation + release hygiene",
+    title: "Documentation that holds up in production",
     description:
-      "BOMs, fabrication drawings, DXFs/flat patterns, revision control, naming/part-number systems, and the boring-but-critical stuff that keeps production from face-planting.",
+      "BOMs, fabrication drawings, DXFs, flat patterns, revision control, part-number systems — all the structural work that prevents the floor from running on tribal knowledge and inference. Built to last past the first build.",
     tags: ["BOMs", "PDM", "ASME prints", "DXF/CNC prep"],
   },
   {
-    title: "Internal tools + automation (practical, not science-fair)",
+    title: "Internal tools that match how engineering actually runs",
     description:
-      "Lightweight apps and automations that connect the dots between engineering, scheduling, purchasing, and production—so the team can see bottlenecks before they become late shipments.",
+      "Production scheduling, capacity tracking, procurement visibility, AI-powered documentation — built lean, deployed fast, maintained without a full-time dev team. The kind of tool a designer builds when the shop is losing weeks to things that should be automatic.",
     tags: ["React/TypeScript", "SQL", "Firebase/Supabase", "AI workflows"],
   },
 ];
 
 export const wordCycleData = [
-  "AI-driven custom tooling",
-  "Production-ready designs",
-  "Engineering precision"
+  "manufacturing reality built in",
+  "floor-ready documentation",
+  "software as operational proof"
 ];
