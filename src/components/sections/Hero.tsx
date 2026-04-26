@@ -60,7 +60,10 @@ export const Hero = () => {
       >
         <div className="text-lg md:text-xl font-normal leading-relaxed text-primary">
           I design mechanical systems and build software and AI tools that make work{' '}
-          <span className="text-accent-primary font-bold relative inline-flex overflow-hidden h-[1.25em] align-baseline items-baseline min-w-[240px] ml-1 translate-y-[0.5em]">
+          <span className="text-accent-primary font-bold relative inline-flex overflow-hidden h-[1.25em] align-baseline items-baseline ml-1 translate-y-[0.5em]">
+            <span className="invisible whitespace-nowrap pointer-events-none">
+              {wordCycleData.reduce((a, b) => (a.length > b.length ? a : b), '')}
+            </span>
             <AnimatePresence mode="popLayout">
               <motion.span
                 key={wordCycleData[currentWord]}
