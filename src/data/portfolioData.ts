@@ -49,11 +49,10 @@ export const portfolioData = {
     {
       title: "Armament Components & Receiver Systems",
       category: "Mechanical design • Receivers • Weapon-system components",
-      image: "assets/images/AR-15 Lower Reciever-Forged.JPG",
+      image: "assets/images/AR-15 Lower Reciever-Forged.jpg",
       outcome: "Receiver and component geometry resolved for fit, function, and manufacturability",
       tags: ["SolidWorks", "Receiver Design", "Fit & Function", "Manufacturing Drawings"],
       gallery: [
-        "assets/images/709870988691 - BARREL NUT.webp",
         "assets/images/308 KB.webp",
         "assets/images/3D View-3.webp",
         "assets/images/Rendering of Upper and Lower Receiver Assembly for an AR15 That I designed for a Leader in the weapons Industry.jpg",
