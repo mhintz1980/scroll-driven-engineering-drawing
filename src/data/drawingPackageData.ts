@@ -37,6 +37,87 @@ export type ProjectDetail = {
   calloutNotes: CalloutNote[];
 };
 
+export type DrawingScene = {
+  id: string;
+  label: string;
+  subtitle: string;
+  section: 'hero' | 'project' | 'services' | 'testimonials' | 'contact';
+  /** How much the background SVG should offset at this scene (0-1 multiplier). */
+  parallaxHint: { xFactor: number; yFactor: number; scaleFactor: number };
+  projectId?: string;
+};
+
+export const drawingScenes: DrawingScene[] = [
+  {
+    id: 'scene-hero',
+    label: 'A',
+    subtitle: 'TITLE & SPECS',
+    section: 'hero',
+    parallaxHint: { xFactor: 0, yFactor: 0, scaleFactor: 1 },
+  },
+  {
+    id: 'scene-p1',
+    label: 'B',
+    subtitle: 'DETAIL A',
+    section: 'project',
+    projectId: 'torque-wrench',
+    parallaxHint: { xFactor: -0.08, yFactor: -0.04, scaleFactor: 1.02 },
+  },
+  {
+    id: 'scene-p2',
+    label: 'C',
+    subtitle: 'DETAIL B',
+    section: 'project',
+    projectId: 'armament',
+    parallaxHint: { xFactor: 0.06, yFactor: -0.1, scaleFactor: 1.02 },
+  },
+  {
+    id: 'scene-p3',
+    label: 'D',
+    subtitle: 'DETAIL C',
+    section: 'project',
+    projectId: 'pump-package',
+    parallaxHint: { xFactor: -0.12, yFactor: -0.16, scaleFactor: 1.02 },
+  },
+  {
+    id: 'scene-p4',
+    label: 'E',
+    subtitle: 'DETAIL D',
+    section: 'project',
+    projectId: 'pumptracker',
+    parallaxHint: { xFactor: 0.04, yFactor: -0.22, scaleFactor: 1.02 },
+  },
+  {
+    id: 'scene-p5',
+    label: 'F',
+    subtitle: 'DETAIL E',
+    section: 'project',
+    projectId: 'renderings',
+    parallaxHint: { xFactor: -0.06, yFactor: -0.28, scaleFactor: 1.02 },
+  },
+  {
+    id: 'scene-services',
+    label: 'G',
+    subtitle: 'CAPABILITIES',
+    section: 'services',
+    parallaxHint: { xFactor: 0.02, yFactor: -0.34, scaleFactor: 1 },
+  },
+  {
+    id: 'scene-notes',
+    label: 'H',
+    subtitle: 'GENERAL NOTES',
+    section: 'testimonials',
+    parallaxHint: { xFactor: -0.1, yFactor: -0.4, scaleFactor: 1 },
+  },
+  {
+    id: 'scene-titleblock',
+    label: 'J',
+    subtitle: 'TITLE BLOCK',
+    section: 'contact',
+    parallaxHint: { xFactor: -0.04, yFactor: -0.46, scaleFactor: 1.04 },
+  },
+];
+
 export const projectDetails: ProjectDetail[] = [
   {
     id: "torque-wrench",
