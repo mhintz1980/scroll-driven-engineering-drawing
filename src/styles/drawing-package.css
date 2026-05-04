@@ -16,8 +16,14 @@
   background: var(--dp-bg);
   color: var(--dp-text);
   font-family: 'JetBrains Mono', 'Cascadia Code', monospace;
+  scroll-snap-type: y proximity;
 }
 
 .drawing-package * {
   scrollbar-color: var(--dp-border) var(--dp-bg);
+}
+
+.drawing-scene {
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
 }

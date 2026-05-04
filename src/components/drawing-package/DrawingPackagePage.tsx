@@ -26,24 +26,34 @@ export function DrawingPackagePage() {
       <TitleBlockHeader />
 
       <main className="relative z-10">
-        <DrawingHero />
+        <section id="scene-hero" className="drawing-scene">
+          <DrawingHero />
+        </section>
 
         {/* Section divider with section line convention */}
         <SectionDivider label="C — C" subtitle="PROJECT DETAIL VIEWS" />
 
         {/* Projects — detail views */}
         {projectDetails.map((project, i) => (
-          <ProjectZone key={project.id} project={project} index={i} />
+          <section key={project.id} id={`scene-p${i + 1}`} className="drawing-scene">
+            <ProjectZone project={project} index={i} />
+          </section>
         ))}
 
         <SectionDivider label="D — D" subtitle="CAPABILITIES SPECIFICATION" />
-        <SpecTable />
+        <section id="scene-services" className="drawing-scene">
+          <SpecTable />
+        </section>
 
         <SectionDivider label="E — E" subtitle="GENERAL NOTES" />
-        <GeneralNotes />
+        <section id="scene-notes" className="drawing-scene">
+          <GeneralNotes />
+        </section>
       </main>
 
-      <TitleBlockFooter />
+      <section id="scene-titleblock" className="drawing-scene relative z-10">
+        <TitleBlockFooter />
+      </section>
     </div>
   );
 }
