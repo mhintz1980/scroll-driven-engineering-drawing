@@ -85,7 +85,7 @@ export function ProjectInspectionModal({ project, onClose }: ProjectInspectionMo
 
       <motion.div
         ref={panelRef}
-        className="relative z-10 mx-4 grid w-full max-w-5xl grid-cols-1 overflow-hidden border-2 md:grid-cols-2"
+        className="relative z-10 grid h-dvh max-h-dvh w-full max-w-none grid-cols-1 overflow-y-auto border-2 md:mx-4 md:h-auto md:max-h-none md:max-w-5xl md:grid-cols-2 md:overflow-hidden"
         style={{ borderColor: 'var(--dp-border)', background: 'var(--dp-bg)' }}
         initial={{ scale: 0.95, y: 20 }}
         animate={{ scale: 1, y: 0 }}
@@ -95,7 +95,7 @@ export function ProjectInspectionModal({ project, onClose }: ProjectInspectionMo
         aria-modal="true"
         aria-labelledby={titleId}
       >
-        <div className="aspect-square overflow-hidden border-b md:border-b-0 md:border-r" style={{ borderColor: 'var(--dp-border)' }}>
+        <div className="h-[40dvh] w-full overflow-hidden border-b md:aspect-square md:h-auto md:border-b-0 md:border-r" style={{ borderColor: 'var(--dp-border)' }}>
           <img
             src={`${import.meta.env.BASE_URL}${project.image.replace(/^\//, '')}`}
             alt={project.title}
@@ -103,7 +103,7 @@ export function ProjectInspectionModal({ project, onClose }: ProjectInspectionMo
           />
         </div>
 
-        <div className="flex min-h-[420px] flex-col p-6">
+        <div className="flex min-h-0 flex-col p-5 md:min-h-[420px] md:p-6">
           <div className="mb-6 flex items-start justify-between gap-6 border-b pb-4" style={{ borderColor: 'var(--dp-border)' }}>
             <div>
               <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em]" style={{ color: 'var(--dp-accent)' }}>
@@ -148,7 +148,7 @@ export function ProjectInspectionModal({ project, onClose }: ProjectInspectionMo
                 <div className="col-span-4 border-r px-3 py-3 font-bold" style={{ borderColor: 'var(--dp-border-dim)', color: 'var(--dp-accent)' }}>
                   {note.label}
                 </div>
-                <div className="col-span-8 px-3 py-3 leading-relaxed" style={{ color: 'var(--dp-text)' }}>
+                <div className="col-span-8 break-words px-3 py-3 leading-relaxed" style={{ color: 'var(--dp-text)' }}>
                   {note.value}
                 </div>
               </div>

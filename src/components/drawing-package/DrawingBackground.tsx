@@ -1,4 +1,5 @@
 import { motion, motionValue, useTransform, type MotionValue } from 'framer-motion';
+import { useEffect, useState } from 'react';
 
 /**
  * DrawingBackground — SVG engineering drawing linework background.
@@ -13,15 +14,27 @@ export function DrawingBackground({ scrollYProgress }: { scrollYProgress?: Motio
   const strokeAccent = 'rgba(255,255,255,0.09)';
   const dash = '8 6';
   const centerDash = '20 4 4 4';
+  const [isMobile, setIsMobile] = useState(false);
   const fallbackProgress = motionValue(0);
   const progress = scrollYProgress ?? fallbackProgress;
+  const parallaxScale = isMobile ? 0.45 : 1;
 
-  const bgX = useTransform(progress, [0, 1], [0, -60]);
-  const bgY = useTransform(progress, [0, 1], [0, -80]);
-  const midX = useTransform(progress, [0, 1], [0, -100]);
-  const midY = useTransform(progress, [0, 1], [0, -140]);
-  const fgX = useTransform(progress, [0, 1], [0, -150]);
-  const fgY = useTransform(progress, [0, 1], [0, -200]);
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 767px)');
+    const updateIsMobile = () => setIsMobile(query.matches);
+
+    updateIsMobile();
+    query.addEventListener('change', updateIsMobile);
+
+    return () => query.removeEventListener('change', updateIsMobile);
+  }, []);
+
+  const bgX = useTransform(progress, [0, 1], [0, -60 * parallaxScale]);
+  const bgY = useTransform(progress, [0, 1], [0, -80 * parallaxScale]);
+  const midX = useTransform(progress, [0, 1], [0, -100 * parallaxScale]);
+  const midY = useTransform(progress, [0, 1], [0, -140 * parallaxScale]);
+  const fgX = useTransform(progress, [0, 1], [0, -150 * parallaxScale]);
+  const fgY = useTransform(progress, [0, 1], [0, -200 * parallaxScale]);
 
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">

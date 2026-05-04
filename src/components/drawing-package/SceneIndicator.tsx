@@ -34,7 +34,7 @@ export function SceneIndicator() {
 
   return (
     <nav
-      className="fixed right-4 top-1/2 z-50 flex -translate-y-1/2 flex-col gap-3"
+      className="fixed right-4 top-1/2 z-50 hidden -translate-y-1/2 flex-col gap-3 md:flex"
       aria-label="Drawing sections"
     >
       {drawingScenes.map((scene) => {

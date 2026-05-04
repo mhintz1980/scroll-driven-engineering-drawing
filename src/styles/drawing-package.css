@@ -16,6 +16,7 @@
   background: var(--dp-bg);
   color: var(--dp-text);
   font-family: 'JetBrains Mono', 'Cascadia Code', monospace;
+  overflow-x: hidden;
   scroll-snap-type: y proximity;
 }
 
@@ -26,4 +27,14 @@
 .drawing-scene {
   scroll-snap-align: start;
   scroll-snap-stop: normal;
+}
+
+@media (max-width: 767px) {
+  .drawing-package {
+    scroll-snap-type: none;
+  }
+
+  .drawing-scene {
+    scroll-snap-align: none;
+  }
 }
