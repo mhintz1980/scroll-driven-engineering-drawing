@@ -37,7 +37,7 @@ export function DrawingBackground({ scrollYProgress }: { scrollYProgress?: Motio
   const fgY = useTransform(progress, [0, 1], [0, -200 * parallaxScale]);
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
       <svg
         viewBox="0 0 1920 4800"
         className="w-full h-full"

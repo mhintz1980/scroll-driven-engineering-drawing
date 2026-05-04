@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useId, useRef } from 'react';
 import type { ProjectDetail } from '../../data/drawingPackageData';
 
@@ -18,6 +18,7 @@ const focusableSelector = [
 
 export function ProjectInspectionModal({ project, onClose }: ProjectInspectionModalProps) {
   const titleId = useId();
+  const shouldReduceMotion = useReducedMotion();
   const panelRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previousActiveElement = useRef<Element | null>(null);
@@ -71,9 +72,10 @@ export function ProjectInspectionModal({ project, onClose }: ProjectInspectionMo
   return (
     <motion.div
       className="fixed inset-0 z-[60] flex items-center justify-center"
-      initial={{ opacity: 0 }}
+      initial={shouldReduceMotion ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      exit={shouldReduceMotion ? {} : { opacity: 0 }}
+      transition={{ duration: shouldReduceMotion ? 0 : 0.18 }}
       role="presentation"
     >
       <button
@@ -87,10 +89,10 @@ export function ProjectInspectionModal({ project, onClose }: ProjectInspectionMo
         ref={panelRef}
         className="relative z-10 grid h-dvh max-h-dvh w-full max-w-none grid-cols-1 overflow-y-auto border-2 md:mx-4 md:h-auto md:max-h-none md:max-w-5xl md:grid-cols-2 md:overflow-hidden"
         style={{ borderColor: 'var(--dp-border)', background: 'var(--dp-bg)' }}
-        initial={{ scale: 0.95, y: 20 }}
-        animate={{ scale: 1, y: 0 }}
-        exit={{ scale: 0.95, y: 20 }}
-        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+        initial={shouldReduceMotion ? false : { scale: 0.95, y: 20 }}
+        animate={shouldReduceMotion ? {} : { scale: 1, y: 0 }}
+        exit={shouldReduceMotion ? {} : { scale: 0.95, y: 20 }}
+        transition={{ duration: shouldReduceMotion ? 0 : 0.22, ease: [0.16, 1, 0.3, 1] }}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

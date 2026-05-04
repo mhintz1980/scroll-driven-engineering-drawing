@@ -1,5 +1,5 @@
 import '../../styles/drawing-package.css';
-import { AnimatePresence, useScroll } from 'framer-motion';
+import { AnimatePresence, useReducedMotion, useScroll } from 'framer-motion';
 import { useRef, useState } from 'react';
 import { DrawingBackground } from './DrawingBackground';
 import { DrawingSheetBorder } from './DrawingSheetBorder';
@@ -20,11 +20,12 @@ import { projectDetails, type ProjectDetail } from '../../data/drawingPackageDat
 export function DrawingPackagePage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [inspectedProject, setInspectedProject] = useState<ProjectDetail | null>(null);
+  const shouldReduceMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: containerRef });
 
   return (
     <div ref={containerRef} className="drawing-package relative min-h-screen">
-      <DrawingBackground scrollYProgress={scrollYProgress} />
+      <DrawingBackground scrollYProgress={shouldReduceMotion ? undefined : scrollYProgress} />
       <DrawingSheetBorder />
       <TitleBlockHeader />
 
