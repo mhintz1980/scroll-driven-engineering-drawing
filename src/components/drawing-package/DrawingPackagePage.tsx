@@ -7,6 +7,7 @@ import { TitleBlockHeader } from './TitleBlockHeader';
 import { DrawingHero } from './DrawingHero';
 import { ProjectZone } from './ProjectZone';
 import { ProjectInspectionModal } from './ProjectInspectionModal';
+import { SceneIndicator } from './SceneIndicator';
 import { SpecTable } from './SpecTable';
 import { GeneralNotes } from './GeneralNotes';
 import { TitleBlockFooter } from './TitleBlockFooter';
@@ -56,6 +57,8 @@ export function DrawingPackagePage() {
       <section id="scene-titleblock" className="drawing-scene relative z-10">
         <TitleBlockFooter />
       </section>
+
+      <SceneIndicator />
 
       <AnimatePresence>
         {inspectedProject && (
