@@ -2,22 +2,34 @@
 /* Applied via .drawing-package class on the page wrapper */
 
 .drawing-package {
-  --dp-bg: oklch(0.145 0.015 245);
-  --dp-surface: oklch(0.17 0.012 245 / 0.58);
-  --dp-border: oklch(0.72 0.018 245 / 0.72);
-  --dp-border-dim: oklch(0.64 0.016 245 / 0.36);
-  --dp-text: oklch(0.94 0.008 245);
-  --dp-text-dim: oklch(0.78 0.012 245 / 0.74);
-  --dp-accent: oklch(0.66 0.19 255);
-  --dp-accent-dim: oklch(0.63 0.19 255 / 0.15);
-  --dp-leader: oklch(0.63 0.19 255 / 0.6);
-  --dp-note-bg: oklch(0.15 0.02 255 / 0.72);
+  --dp-bg: oklch(0.12 0.02 245);
+  --dp-surface: oklch(0.15 0.02 245 / 0.65);
+  --dp-border: oklch(0.85 0.02 245 / 0.85);
+  --dp-border-dim: oklch(0.70 0.02 245 / 0.45);
+  --dp-text: oklch(0.96 0.01 245);
+  --dp-text-dim: oklch(0.80 0.02 245 / 0.8);
+  --dp-accent: oklch(0.70 0.21 255);
+  --dp-accent-dim: oklch(0.70 0.21 255 / 0.2);
+  --dp-leader: oklch(0.70 0.21 255 / 0.65);
+  --dp-note-bg: oklch(0.12 0.02 255 / 0.85);
 
   background: var(--dp-bg);
   color: var(--dp-text);
-  font-family: 'JetBrains Mono', 'Cascadia Code', monospace;
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'SF Mono', monospace;
   overflow-x: hidden;
   scroll-snap-type: y proximity;
+  position: relative;
+}
+
+.drawing-package::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+  opacity: 0.8;
+  mix-blend-mode: overlay;
 }
 
 .drawing-package * {

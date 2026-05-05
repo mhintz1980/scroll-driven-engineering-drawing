@@ -1,0 +1,87 @@
+brainstorming/SKILL.md
+writing-plans/SKILL.md
+frontend-design/SKILL.md
+prompt-recent#L1-170
+2026-05-04-the_version_worth_building.md#L1-139
+AR-15 Lower Reciever-Forged.PDF.png#L1
+\home\markimus\.config\superpowers\worktrees\mark-hintz-portfolio_bg-cad\scroll-driven-engineering-drawing\public\assets\images
+\home\markimus\.config\superpowers\worktrees\mark-hintz-portfolio_bg-cad\scroll-driven-engineering-drawing
+Now let me view all the referenced images (1.png through 6.png and 3-1.png):
+
+1.png#L1
+2.png#L1
+3.png#L1
+4.png#L1
+5.png#L1
+6.png#L1
+3-1.png#L1
+\home\markimus\.config\superpowers\worktrees\mark-hintz-portfolio_bg-cad\scroll-driven-engineering-drawing\src
+PRODUCT.md#L1-42
+Now let me explore the current codebase structure deeper to understand what exists:
+
+\home\markimus\.config\superpowers\worktrees\mark-hintz-portfolio_bg-cad\scroll-driven-engineering-drawing\src\components
+\home\markimus\.config\superpowers\worktrees\mark-hintz-portfolio_bg-cad\scroll-driven-engineering-drawing\src\data
+App.tsx#L1-38
+package.json#L1-56
+2026-05-05-drawing-environment.md#L1-91
+Let me dig deeper into the existing drawing-package components:
+
+\home\markimus\.config\superpowers\worktrees\mark-hintz-portfolio_bg-cad\scroll-driven-engineering-drawing\src\components\drawing-package
+drawingPackageData.ts#L1-183
+Now let me look at the existing DrawingBackground and DrawingPackagePage to understand the current state:
+
+DrawingBackground.tsx#L1-488
+Now let me look at the rest of the drawing package components:
+
+DrawingPackagePage.tsx#L1-110
+DrawingHero.tsx#L1-161
+\home\markimus\.config\superpowers\worktrees\mark-hintz-portfolio_bg-cad\scroll-driven-engineering-drawing\docs\plans
+Now I have a comprehensive understanding. Let me use sequential thinking to synthesize the design, then write the implementation plan.
+
+{
+  "nextThoughtNeeded": true,
+  "thought": "UNDERSTANDING THE VISION: \"The Version Worth Building\"\n\nThe user (Mark Hintz) wants to transform his portfolio's drawing-package page from using hand-authored synthetic SVG linework as its background into a staged drawing environment built from REAL engineering drawing images he created.\n\nKEY IMAGES ASSESSED:\n- AR-15 Lower Receiver (white bg, full engineering sheet, ~1.2MB) — the master reference. Professional drawing with revision table, title block, multiple views, GD&T callouts. White background.\n- 1.png — Dark background, Output Shaft drawing for Special Tool Solutions. Multiple views, section cuts, detail views. EXCELLENT dark-bg candidate.\n- 2.png — White background version of AR-15 Lower Receiver (same part, different rendering). Would need inversion.\n- 3.png — White background full AR-15 Lower sheet with title block. High detail. Same as AR-15 Lower Receiver-Forged.PDF.png but different rendering style.\n- 3-1.png — Same as 3.png essentially (very similar white background AR-15 Lower sheet).\n- 4.png — White background \"Big Housing\" drawing. Multiple detail views, section views.\n- 5.png — White background gear part drawing for \"MARKBUILDSITBETTER / GEARED-PARTS-NO-PROBLEM\". Sheet 2 of 2. Very detailed section views.\n- 6.png — White background gear part drawing for same project. Sheet 1 of 2. Main views with revision table.\n\nCRITICAL OBSERVATION: Only 1.png has a dark background naturally. The rest (2-6, AR-15) are white-background drawings. The vision doc mentions 3.png as the \"master dark sheet\" but 3.png is actually WHITE background. This is a gap between the earlier Codex conversation and reality.\n\nSOLUTION: Need CSS/image processing to convert white-bg drawings to dark-bg (invert + adjust). CSS filter: `invert(1) hue-rotate(180deg)` or similar. Or, use opacity + blend modes to make them work on dark backgrounds.\n\nCURRENT STATE:\n- DrawingBackground.tsx: 488 lines of hand-authored SVG (isometric motors, orthographic pumps, gearboxes, leader lines, etc.)\n- This needs to be largely REPLACED with real image layers\n- Keep only structural SVG: blue leader lines, detail circles, section markers, title block framing\n\nTHE 4-LAYER ARCHITECTURE:\n1. Base Sheet: 3.png or 3-1.png as the dominant dark sheet (inverted)\n2. Secondary Drawing Ghosts: Cropped fragments from 1.png, 4.png, 5.png, 6.png\n3. Scene-Specific Emphasis: Active plate shifts opacity/position per scroll section\n4. Interactive Overlay: Minimal SVG for blue leaders, detail bubbles, section markers",
+  "thoughtNumber": 1,
+  "totalThoughts": 4
+}
+
+
+{
+  "thoughtNumber": 1,
+  "totalThoughts": 4,
+  "nextThoughtNeeded": true,
+  "branches": [],
+  "thoughtHistoryLength": 1
+}
+
+
+{
+  "nextThoughtNeeded": true,
+  "thought": "TASK DECOMPOSITION — What actually needs to happen:\n\nPHASE 1: IMAGE PREPARATION\n- Convert white-bg images to dark treatment. Options:\n  a) CSS filters at render time (simplest, no preprocessing)\n  b) Pre-process via canvas/sharp to create dark variants (better quality)\n  c) Use mix-blend-mode: difference or screen against dark bg\n- Best approach: CSS filters (`filter: invert(1) brightness(0.85) contrast(1.1)`) on the white-bg images. This keeps 1.png untouched (already dark). Simple and reversible.\n- Image optimization: Convert PNGs to WebP for runtime. The AR-15 image is 1.2MB, 3.png is 1.3MB. Need to optimize.\n\nPHASE 2: STRIP SYNTHETIC SVG\n- Remove from DrawingBackground.tsx:\n  * IsometricHousing, IsometricMotor, LargeAssemblyGhost (illustrative components)\n  * OrthographicGearbox, OrthographicPump (fake orthographic views)\n  * ProjectDrawingBoard (entire fake project board)\n- Keep:\n  * SheetFrame (structural border)\n  * SectionTick (zone markers)\n  * TitleBlock, RevisionBlock, FooterBlock (structural framing)\n  * DetailBubble (but refactor to not contain IsometricMotor)\n  * LeaderNetwork (blue leader lines)\n  * CalloutText (specs)\n\nPHASE 3: ADD DRAWING PLATE SYSTEM\n- Define DrawingPlate type in drawingPackageData.ts\n- Create DrawingPlateLayer component for rendering plates\n- Map plates to sections with positioning, opacity, scale, parallax\n\nPHASE 4: SCROLL-LINKED SCENE COMPOSITION\n- Per-section plate emphasis using useScroll + useTransform\n- Active section detection via IntersectionObserver or scroll position\n- Opacity hierarchy: base layer always visible, ghost layers at 0.1-0.2, active scene plate rises to 0.4-0.6\n\nPHASE 5: OVERLAY REFINEMENT\n- Slim down SVG overlay to structural elements only\n- Add a few connecting callouts tied to live content\n- Ensure text legibility with controlled dark zones/masks behind content\n\nPHASE 6: PERFORMANCE & POLISH\n- Convert images to WebP/AVIF\n- Lazy-load secondary plates\n- Test decode cost\n- Ensure prefers-reduced-motion compliance\n- Mobile responsiveness",
+  "thoughtNumber": 2,
+  "totalThoughts": 4
+}
+
+
+{
+  "thoughtNumber": 2,
+  "totalThoughts": 4,
+  "nextThoughtNeeded": true,
+  "branches": [],
+  "thoughtHistoryLength": 2
+}
+
+{
+  "nextThoughtNeeded": true,
+  "thought": "DESIGN DECISIONS & IMAGE MAPPING:\n\nIMAGE ROLE ASSIGNMENTS (revised from docs after viewing actual images):\n- 3-1.png (273KB): PRIMARY BASE SHEET — white-bg AR-15 Lower Receiver, full drawing sheet with border, title block. Will invert to dark. Best candidate for the \"environment\" feel because it IS a full drawing sheet.\n- 1.png (120KB): SECONDARY GHOST — dark-bg Output Shaft for Special Tool Solutions. Already dark. Place behind project sections (mechanical work zone).\n- 6.png (77KB): SECONDARY GHOST — Gear Housing Sheet 1 with MARKBUILDSITBETTER title block. Invert to dark. Place near hero/title area.\n- 5.png (98KB): SCENE EMPHASIS — Gear Housing Sheet 2 with section views and detail views. Rich content. Place near services/capabilities.\n- 4.png (224KB): SCENE EMPHASIS — Big Housing drawing. Place near footer/contact for annotation density.\n- AR-15 Lower Reciever-Forged.PDF.png (1.2MB): TOO LARGE for a plate layer as-is. Could be used as a high-res replacement for 3-1.png or cropped. Given it's white-bg and essentially the same drawing as 3-1.png, use 3-1.png instead (smaller).\n- 2.png (335KB): White-bg version. Skip or use very faintly.\n\nOPACITY HIERARCHY:\n- Base sheet (3-1.png inverted): opacity 0.14-0.18, fixed position, covers entire viewport\n- Secondary ghosts (1.png, 6.png): opacity 0.08-0.12, positioned in specific zones, slight parallax\n- Active scene plate: transitions to opacity 0.25-0.35 when its section is in view\n- SVG overlay: full opacity on blue elements, structural lines at 0.4-0.7\n\nSCROLL BEHAVIOR:\n- Base layer: position fixed, very subtle scale drift (1.0 → 1.02 over full scroll)\n- Ghost plates: absolute positioned, parallax at 0.3-0.5x scroll speed\n- Active plate: opacity pulse when IntersectionObserver fires on its section\n- SVG overlay: parallax at 0.7-1.0x scroll speed (closest to content)\n\nKEY RISK MITIGATION:\n1. Text legibility: Add `backdrop-filter: blur(1px)` or semi-transparent dark panels behind content sections\n2. Performance: Use will-change: transform on motion layers, lazy load images below fold\n3. Visual clutter: Only ONE plate emphasized per viewport at a time",
+  "thoughtNumber": 3,
+  "totalThoughts": 4
+}
+
+{
+  "thoughtNumber": 3,
+  "totalThoughts": 4,
+  "nextThoughtNeeded": true,
+  "branches": [],
+  "thoughtHistoryLength": 3
+}
