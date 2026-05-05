@@ -180,3 +180,24 @@ export const projectDetails: ProjectDetail[] = [
     ],
   },
 ];
+
+export type DrawingPlate = {
+  src: string;
+  section: "hero" | "project" | "services" | "testimonials" | "contact" | "base";
+  x: string | number;
+  y: string | number;
+  width: string | number;
+  baseOpacity: number;
+  activeOpacity: number;
+  scale: number;
+  parallaxStrength: number;
+  invert?: boolean;
+};
+
+export const drawingPlates: DrawingPlate[] = [
+  { src: "assets/images/3-1.png", section: "base", x: "-5%", y: "-5%", width: "110%", baseOpacity: 0.16, activeOpacity: 0.16, scale: 1, parallaxStrength: 0.05, invert: true },
+  { src: "assets/images/6.png", section: "hero", x: "10%", y: "5%", width: "40%", baseOpacity: 0.05, activeOpacity: 0.25, scale: 1.2, parallaxStrength: 0.2, invert: true },
+  { src: "assets/images/1.png", section: "project", x: "50%", y: "30%", width: "50%", baseOpacity: 0.1, activeOpacity: 0.35, scale: 1.1, parallaxStrength: 0.3, invert: false },
+  { src: "assets/images/5.png", section: "services", x: "15%", y: "60%", width: "45%", baseOpacity: 0.08, activeOpacity: 0.25, scale: 1.0, parallaxStrength: 0.25, invert: true },
+  { src: "assets/images/4.png", section: "contact", x: "40%", y: "80%", width: "60%", baseOpacity: 0.1, activeOpacity: 0.3, scale: 1.3, parallaxStrength: 0.4, invert: true },
+];

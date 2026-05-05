@@ -119,7 +119,10 @@ export function ProjectZone({
         </motion.div>
 
         {/* Callout notes — stacked vertically beside the detail view */}
-        <div className="flex-1 space-y-4 max-w-md">
+        <div 
+          className="flex-1 space-y-4 max-w-md p-6 rounded backdrop-blur-sm"
+          style={{ background: 'rgba(9, 16, 25, 0.4)' }}
+        >
           {project.calloutNotes.map((note, i) => (
             <LeaderCallout
               key={note.label}

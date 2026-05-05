@@ -68,9 +68,10 @@ export function DrawingHero() {
         initial={shouldReduceMotion ? {} : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.4 }}
-        className="mb-8 max-w-xl"
+        className="mb-8 max-w-xl p-4 rounded backdrop-blur-sm"
         style={{
           color: 'var(--dp-text)',
+          background: 'rgba(9, 16, 25, 0.4)',
         }}
       >
         <div className="text-sm md:text-base uppercase leading-relaxed tracking-[0.02em]">
@@ -127,10 +128,10 @@ export function DrawingHero() {
         variants={stagger}
         initial="hidden"
         animate="visible"
-        className="text-xs leading-relaxed p-5 max-w-[500px] border"
+        className="text-xs leading-relaxed p-5 max-w-[500px] border backdrop-blur-sm"
         style={{
           borderColor: 'var(--dp-border)',
-          background: 'color-mix(in oklch, var(--dp-surface) 72%, transparent)',
+          background: 'rgba(9, 16, 25, 0.6)',
         }}
       >
         {[
