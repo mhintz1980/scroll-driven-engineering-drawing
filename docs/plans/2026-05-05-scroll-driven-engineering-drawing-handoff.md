@@ -39,3 +39,12 @@ In the next session, we plan to experiment with porting this React/Framer Motion
 **Relevant Skills for Next Session:**
 - Ensure you load and consult the `remotion-video-production` skill for scene planning, composition structuring, and rendering commands.
 - Consult the `remotion-best-practices` skill for syntax rules, asset handling, and performance optimization in the Remotion context.
+
+## Future Experiment 2: The GSAP "Giant Panning Canvas" Architecture
+Based on `docs/the-plan-worth-doing.md`, we will pivot to a radically different "Spatial Web Experience" architecture in upcoming sessions:
+- **The Concept:** Replace the vertical scrolling parallax with a single massive (e.g. 300vw x 300vh) pinned background canvas. Using **GSAP + ScrollTrigger**, the user's vertical scroll will scrub a timeline that executes cinematic "whip-pans" (translating X/Y) across the canvas to pre-defined coordinates.
+- **The Substrate:** We will start with `public/assets/images/AR-15 Lower Reciever-Forged.PDF.png` (or `3.png`) stretched to size as the massive background canvas. The user will provide a cleaner vector version later with title block text removed.
+- **Detail View Components (`ProjectZone`):** Autonomous components positioned via absolute coordinates on the master canvas. When panned into the viewport, an `IntersectionObserver` will trigger a local timeline to draw an SVG leader line and pop out a "Detail Circle".
+- **Placeholders:** We will initially use placeholder blocks for the Detail View circles and CAD videos.
+- **Remotion's Role:** Remotion will *not* be used to port the entire site into a video (as previously discussed). Instead, its role is strictly confined to rendering the 360° spinning CAD video assets (`.mp4`) that will play inside the popped-open Detail View circles.
+- **Relevant Skills:** No specific GSAP skill is loaded, so rely on standard GSAP ScrollTrigger patterns. Continue to use `frontend-design` for impeccable aesthetics.
