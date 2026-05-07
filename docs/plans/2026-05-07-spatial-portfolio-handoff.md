@@ -26,4 +26,4 @@ Successfully laid the foundation for the "Spatial Web Experience". We pivoted fr
 
 ## Relevant Skills
 - GSAP ScrollTrigger patterns.
-- `frontend-design` for impeccable aesthetic polish on the UI components once they are placed.
+- **CRITICAL:** You must explicitly load and use the `pbakaus/impeccable` (or `frontend-design`) skill for the UI components. Do not rely on generic styling; we need impeccable aesthetic polish, blending modes, and raw CSS artistry to make the UI look like native shop-floor annotations.
