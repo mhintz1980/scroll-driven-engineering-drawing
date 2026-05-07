@@ -1,217 +1,158 @@
-import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
-import { useRef } from 'react';
-import type { ProjectDetail, CalloutNote } from '../../data/drawingPackageData';
+import { useEffect, useRef } from 'react';
+import gsap from 'gsap';
 
-/**
- * ProjectZone — a project displayed as a detail view on an engineering drawing.
- * Features:
- * - Circular detail view border with label
- * - Leader line extending from the circle
- * - Scroll-driven entrance animation (scales from small to final)
- * - 4 callout notes with leader lines and horizontal text shelves
- */
-export function ProjectZone({
-  project,
-  index,
-  onClick,
-}: {
-  project: ProjectDetail;
-  index: number;
-  onClick?: () => void;
-}) {
+export interface ProjectZoneProps {
+  id: string;
+  title: string;
+  top: string;
+  left: string;
+}
+
+export function ProjectZone({ id, title, top, left }: ProjectZoneProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const shouldReduceMotion = useReducedMotion();
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ['start end', 'end start'],
-  });
+  const pathRef = useRef<SVGPathElement>(null);
+  const dotRef = useRef<SVGCircleElement>(null);
+  const dotInnerRef = useRef<SVGCircleElement>(null);
+  const circleRef = useRef<HTMLDivElement>(null);
+  const labelRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
+  const hasTriggered = useRef(false);
 
-  // Alternate layout: even projects on left, odd on right
-  const isLeft = index % 2 === 0;
+  useEffect(() => {
+    // We only want to animate once when it comes into view
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !hasTriggered.current) {
+            hasTriggered.current = true;
+            
+            if (pathRef.current && dotRef.current && dotInnerRef.current && circleRef.current && labelRef.current && textRef.current) {
+              const length = pathRef.current.getTotalLength();
+              gsap.set(pathRef.current, { strokeDasharray: length, strokeDashoffset: length });
+              gsap.set([dotRef.current, dotInnerRef.current], { scale: 0, opacity: 0, transformOrigin: "center" });
+              gsap.set(labelRef.current, { y: 20, opacity: 0, rotateX: 90 });
+              gsap.set(textRef.current, { opacity: 0, filter: "blur(4px)" });
+
+              const tl = gsap.timeline();
+
+              tl.to([dotRef.current, dotInnerRef.current], {
+                scale: 1,
+                opacity: 1,
+                duration: 0.4,
+                stagger: 0.1,
+                ease: "back.out(2.5)",
+              })
+              .to(pathRef.current, {
+                strokeDashoffset: 0,
+                duration: 0.8,
+                ease: "power2.inOut",
+              }, "-=0.2")
+              .fromTo(circleRef.current, 
+                { scale: 0.5, opacity: 0, rotationZ: -15 },
+                {
+                  scale: 1,
+                  opacity: 1,
+                  rotationZ: 0,
+                  duration: 1,
+                  ease: "expo.out",
+                },
+                "-=0.3"
+              )
+              .to(labelRef.current, {
+                y: 0,
+                opacity: 1,
+                rotateX: 0,
+                duration: 0.6,
+                ease: "back.out(1.7)",
+              }, "-=0.6")
+              .to(textRef.current, {
+                opacity: 1,
+                filter: "blur(0px)",
+                duration: 0.4,
+                ease: "power1.out",
+              }, "-=0.4");
+            }
+          }
+        });
+      },
+      {
+        threshold: 0.1,
+      }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div
       ref={containerRef}
-      className="relative py-16 md:py-24 px-8 md:px-24"
-      style={{ minHeight: '120vh' }}
+      className="absolute pointer-events-none w-[600px] h-[500px]"
+      style={{ top, left }}
     >
-      <div className={`flex flex-col ${isLeft ? 'md:flex-row' : 'md:flex-row-reverse'} items-center gap-12 md:gap-16 max-w-6xl mx-auto`}>
+      {/* The Leader Line */}
+      <svg className="absolute inset-0 w-full h-full pointer-events-none drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]" fill="none" viewBox="0 0 600 500">
+        <path
+          ref={pathRef}
+          d="M 20 480 L 150 480 L 410 340"
+          className="stroke-blue-500"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ strokeDasharray: 1000, strokeDashoffset: 1000 }}
+        />
+        {/* Anchor point dot with inner core */}
+        <circle ref={dotRef} cx="20" cy="480" r="8" className="fill-slate-900 stroke-blue-500 stroke-[3px] scale-0 opacity-0 transform-origin-center" />
+        <circle ref={dotInnerRef} cx="20" cy="480" r="3" className="fill-blue-400 scale-0 opacity-0 transform-origin-center" />
+      </svg>
 
-        {/* Detail view circle with image */}
-        <motion.div
-          className="relative flex-shrink-0"
-        >
-          {/* Detail view label above circle */}
-          <div
-            className="text-center mb-3 text-[11px] uppercase tracking-[0.2em] font-bold"
-            style={{ color: 'var(--dp-accent)' }}
-          >
-            {project.detailLabel}
-            <span className="ml-2 font-normal" style={{ color: 'var(--dp-text-dim)' }}>
-              SCALE 2:1
-            </span>
-          </div>
+      {/* The Detail Circle */}
+      <div
+        ref={circleRef}
+        className="w-[300px] h-[300px] rounded-full absolute top-10 right-10 border-4 border-blue-500 bg-slate-900/90 backdrop-blur-md shadow-[0_0_40px_rgba(59,130,246,0.25),inset_0_0_20px_rgba(59,130,246,0.15)] pointer-events-auto flex items-center justify-center flex-col relative opacity-0 group"
+      >
+        {/* Inner rings for technical aesthetic */}
+        <div className="absolute inset-2 rounded-full border border-blue-500/30 border-dashed animate-[spin_60s_linear_infinite]" />
+        <div className="absolute inset-4 rounded-full border border-blue-500/10" />
 
-          {/* Circular frame */}
-          <button
-            type="button"
-            onClick={onClick}
-            className="relative w-[280px] h-[280px] md:w-[360px] md:h-[360px] cursor-pointer rounded-full overflow-hidden border-2 bg-transparent p-0 transition-transform focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent"
-            style={{
-              borderColor: 'var(--dp-accent)',
-              boxShadow: '0 0 0 1px color-mix(in oklch, var(--dp-text) 26%, transparent), 0 0 40px color-mix(in oklch, var(--dp-accent) 18%, transparent)',
-            }}
-            aria-label={`Inspect ${project.title}`}
-          >
-            <span
-              className="absolute inset-0 z-10 rounded-full"
-              style={{
-                background:
-                  'radial-gradient(circle at 45% 35%, transparent 0 46%, rgba(20, 120, 255, 0.16) 72%, rgba(20, 120, 255, 0.24) 100%)',
-                mixBlendMode: 'screen',
-              }}
-            />
-            <img
-              src={`${import.meta.env.BASE_URL}${project.image.replace(/^\//, '')}`}
-              alt={project.title}
-              className="h-full w-full object-cover opacity-90 saturate-[0.72] contrast-125"
-              loading="lazy"
-            />
-          </button>
+        {/* Diagonal hashing pattern background */}
+        <div className="absolute inset-0 rounded-full opacity-10" 
+             style={{ 
+               backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 5px, #3b82f6 5px, #3b82f6 6px)` 
+             }} 
+        />
 
-          {/* Leader line extending from circle to background */}
-          <svg
-            className="absolute pointer-events-none"
-            style={{
-              width: '120px',
-              height: '120px',
-              [isLeft ? 'right' : 'left']: '-100px',
-              top: '20%',
-            }}
-            viewBox="0 0 120 120"
-          >
-            <line
-              x1={isLeft ? 0 : 120}
-              y1="60"
-              x2={isLeft ? 100 : 20}
-              y2="20"
-              stroke="var(--dp-accent)"
-              strokeWidth="1"
-              opacity="0.5"
-            />
-            {/* Arrow at start */}
-            <circle
-              cx={isLeft ? 0 : 120}
-              cy="60"
-              r="3"
-              fill="var(--dp-accent)"
-              opacity="0.5"
-            />
-          </svg>
+        {/* Reticle / Crosshairs */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-full h-px bg-blue-500/20" />
+          <div className="h-full w-px bg-blue-500/20 absolute" />
+        </div>
 
-          {/* Project title below circle */}
-          <div
-            className="text-center mt-4 text-[12px] uppercase tracking-[0.1em] font-bold max-w-[360px]"
-            style={{ color: 'var(--dp-text)' }}
-          >
-            {project.title}
-          </div>
-        </motion.div>
+        {/* Video Placeholder */}
+        <div ref={textRef} className="z-10 opacity-0 text-blue-400/80 font-mono text-sm tracking-[0.2em] text-center px-4 mix-blend-screen bg-slate-900/50 p-2 border border-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.1)]">
+          CAD_SPIN_RENDER.mp4
+        </div>
 
-        {/* Callout notes — stacked vertically beside the detail view */}
+        {/* Label Box */}
         <div 
-          className="flex-1 space-y-4 max-w-md p-6 rounded backdrop-blur-sm"
-          style={{ background: 'rgba(9, 16, 25, 0.4)' }}
+          ref={labelRef}
+          className="absolute opacity-0 -bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/95 backdrop-blur-sm border-2 border-blue-500 px-6 py-2.5 shadow-[0_4px_20px_rgba(59,130,246,0.3)] whitespace-nowrap flex items-center gap-4 group-hover:scale-105 transition-transform duration-300"
+          style={{ transformPerspective: 500 }}
         >
-          {project.calloutNotes.map((note, i) => (
-            <LeaderCallout
-              key={note.label}
-              note={note}
-              index={i}
-              scrollProgress={scrollYProgress}
-              reducedMotion={shouldReduceMotion ?? false}
-              fromLeft={isLeft}
-            />
-          ))}
+          <div className="flex items-center justify-center bg-blue-500 text-slate-900 font-mono font-bold text-lg h-7 min-w-[28px] px-1 rounded-sm">
+            {id}
+          </div>
+          <div className="text-slate-100 font-mono text-[13px] font-semibold tracking-widest">
+            {title}
+          </div>
+          {/* Decorative corner accents on the label */}
+          <div className="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-blue-300" />
+          <div className="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-blue-300" />
         </div>
       </div>
     </div>
-  );
-}
-
-/**
- * LeaderCallout — a callout note with leader line and horizontal text shelf.
- * The leader starts with a dot (representing attachment to the detail view),
- * extends at an angle, then runs horizontal with text above.
- */
-function LeaderCallout({
-  note,
-  index,
-  scrollProgress,
-  reducedMotion,
-  fromLeft,
-}: {
-  note: CalloutNote;
-  index: number;
-  scrollProgress: ReturnType<typeof useScroll>['scrollYProgress'];
-  reducedMotion: boolean;
-  fromLeft: boolean;
-}) {
-  const start = 0.2 + index * 0.1;
-  const end = start + 0.08;
-  const noteOpacity = useTransform(scrollProgress, [start, end], [0, 1]);
-  const noteX = useTransform(scrollProgress, [start, end], [fromLeft ? -30 : 30, 0]);
-
-  // SVG leader line path length for draw-in animation
-  const pathLength = useTransform(scrollProgress, [start, end], [0, 1]);
-
-  return (
-    <motion.div
-      style={reducedMotion ? {} : { opacity: noteOpacity, x: noteX }}
-      className="flex items-start gap-3"
-    >
-      {/* Leader line */}
-      <svg width="60" height="32" viewBox="0 0 60 32" className="shrink-0 mt-1">
-        {/* Angled segment */}
-        <motion.line
-          x1="0" y1="28" x2="20" y2="8"
-          stroke="var(--dp-accent)"
-          strokeWidth="1"
-          style={reducedMotion ? {} : { pathLength }}
-          opacity="0.7"
-        />
-        {/* Horizontal shelf */}
-        <motion.line
-          x1="20" y1="8" x2="58" y2="8"
-          stroke="var(--dp-accent)"
-          strokeWidth="1"
-          style={reducedMotion ? {} : { pathLength }}
-          opacity="0.7"
-        />
-        {/* Arrow dot at start */}
-        <circle cx="0" cy="28" r="2.5" fill="var(--dp-accent)" opacity="0.7" />
-        {/* Arrowhead at end */}
-        <polygon points="55,5 60,8 55,11" fill="var(--dp-accent)" opacity="0.7" />
-      </svg>
-
-      {/* Note text */}
-      <div
-        className="border-b pb-2 flex-1"
-        style={{ borderColor: 'var(--dp-border-dim)' }}
-      >
-        <div
-          className="text-[9px] uppercase tracking-[0.15em] font-bold mb-0.5"
-          style={{ color: 'var(--dp-accent)' }}
-        >
-          {note.label}
-        </div>
-        <div
-          className="text-[11px] uppercase tracking-[0.03em] leading-snug"
-          style={{ color: 'var(--dp-text)' }}
-        >
-          {note.value}
-        </div>
-      </div>
-    </motion.div>
   );
 }
