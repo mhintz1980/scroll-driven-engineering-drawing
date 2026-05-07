@@ -15,23 +15,23 @@ export function DrawingPackagePage() {
           trigger: containerRef.current,
           pin: true,
           start: 'top top',
-          end: '+=4000',
+          end: '+=2500', // Short scroll distance to force aggressive whip-pan speeds
           scrub: 1.2,
         },
       });
 
       tl.to(substrateRef.current, {
-        x: '-60vw',
-        y: '-50vh',
-        scale: 1.5,
+        x: -4500,
+        y: -3000,
+        scale: 1.8,
         duration: 1,
-        ease: 'power2.inOut',
+        ease: 'power3.inOut', // Sharper ease for the whip effect
       }).to(substrateRef.current, {
-        x: '-120vw',
-        y: '-10vh',
-        scale: 1.2,
+        x: -7500,
+        y: -5500,
+        scale: 1.3,
         duration: 1,
-        ease: 'power2.inOut',
+        ease: 'power3.inOut',
       });
     }, containerRef);
 
@@ -41,14 +41,17 @@ export function DrawingPackagePage() {
   return (
     <div
       ref={containerRef}
-      className="w-[100vw] h-[100vh] overflow-hidden bg-slate-950"
+      className="w-screen h-screen overflow-hidden bg-slate-950"
     >
       <div
         ref={substrateRef}
-        className="w-[300vw] h-[300vh] origin-top-left bg-cover bg-no-repeat"
+        className="origin-top-left bg-no-repeat"
         style={{
+          width: '8800px',
+          height: '6800px',
           backgroundImage: `url('${import.meta.env.BASE_URL}assets/images/AR-15-Lower-Reciever-Forged.webp')`,
-          backgroundPosition: 'center',
+          backgroundSize: '100% 100%',
+          backgroundPosition: 'top left',
         }}
       />
     </div>
