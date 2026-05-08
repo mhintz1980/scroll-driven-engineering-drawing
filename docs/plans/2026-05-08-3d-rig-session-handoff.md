@@ -75,47 +75,55 @@ put only ~32% of the 600x500 component on-screen in a 1280x720 viewport → obse
 | `a1635b3` | 3D rig: Tasks 2–5 (perspective, tilt, lift, DOF blur) |
 | `81ae35c` | SVG asset + invert(1) white linework (Task 1) |
 | `c2c771e` | Playwright dep, DXF source file, updated plan doc |
-| pending | `perspective` lint fix on labelRef |
+| `c5438a3` | Lint fix (`perspective: '500px'`), session handoff + plan checklist update |
+| `6794de2` | **Task 6 complete** — camera recalibration + Station B ProjectZone |
+| `63a89e1` | Docs: mark all tasks complete, update living context with station map |
 
 ---
 
 ## Current State of Key Files
 
-### `DrawingPackagePage.tsx`
+### `DrawingPackagePage.tsx` *(post-Task-6)*
 - `useLayoutEffect` (not `useEffect`) for zero-FOUC GSAP initialization
-- `containerRef` div: `perspective: 1800px, perspectiveOrigin: 50% 40%`
+- `containerRef` div: `perspective: 4000px, perspectiveOrigin: 50% 40%`  ← was 1800px
 - `substrateRef` div: `transformStyle: preserve-3d`, `8800×6800px`
 - `bgLayerRef` img: SVG at 8800×6800, `filter: invert(1)`, `mix-blend-screen`, `opacity: 0.9`
-- GSAP start: `x: -1400, y: -3730, scale: 1.2, rotateX: 0`
-- GSAP pan 1 (whip): `x: -4500, y: -3000, scale: 1.8, rotateX: 0`
-- GSAP pan 2 (tilt stop): `x: -7500, y: -5500, scale: 1.3, rotateX: 62`
+- GSAP start (Station A): `x: -1400, y: -3730, scale: 1.2, rotateX: 0`
+- GSAP pan 1 (whip/transit): `x: -4800, y: -2000, scale: 1.6, rotateX: 0`
+- GSAP pan 2 (tilt stop / Station B): `x: -6400, y: -1000, scale: 1.2, rotateX: 35` ← was 62°
 - `handleLift`: tweens `bgLayerRef` to `invert(1) blur(10px)` over 1s
 
-### `ProjectZone.tsx`
+### `ProjectZone.tsx` *(unchanged from Tasks 2-5)*
 - `onLift?: () => void` prop
 - `containerRef` div: `transformStyle: preserve-3d`
-- `labelRef` div: `perspective: '500px'` (was `transformPerspective: 500`)
+- `labelRef` div: `perspective: '500px'` (lint-fixed from `transformPerspective: 500`)
 - All elements hidden by CSS on mount (no FOUC)
 - IntersectionObserver threshold: `0.1`
 - Animation order: dot → path draw → circle reveal → label pop → text blur-in → **z: 400 lift**
 - `onStart: () => onLift?.()` fires DOF blur at lift start
 
-### `ProjectZone` on canvas
-- `id="A"`, `title="TRIGGER GUARD RADIUS"`, `top="3200px"`, `left="1450px"`
+### `ProjectZone` instances on canvas
+| Station | id | Title | top | left | onLift |
+|---|---|---|---|---|---|
+| A | `"A"` | TRIGGER GUARD RADIUS | `3200px` | `1450px` | `handleLift` ✅ |
+| B | `"B"` | BUFFER TUBE SOCKET | `833px` | `5567px` | *(none — DOF fires from A only)* |
 
 ---
 
-## Remaining Work (Task 6)
+## ✅ All Tasks Complete
 
-**Camera Coordinate Recalibration** — the only incomplete task.
+Task 6 (camera recalibration + Station B) is fully shipped.
 
-The `rotateX: 62` perspective tilt on the final pan stop causes foreshortening that shifts
-visual positions. The current end coordinates (`x: -7500, y: -5500`) land in a blank area
-of the canvas. Need to:
-1. Playwright scroll script with `page.mouse.wheel()` to reach the tilted end state
-2. Screenshot and visually identify which part of the drawing is centered
-3. Iteratively adjust `x/y/scale` values until interesting drawing content is in frame
-4. Identify a second `ProjectZone` station coordinate for that final stop
+**Geometry bug discovered and fixed during Task 6:**
+- Original `rotateX: 62° + perspective: 1800px` caused content at substrate Y≈3200px to
+  exceed the focal plane depth (3392px > 1800px) → invisible.
+- Fix: `perspective: 4000px`, `rotateX: 35°`.
+  Max safe substrate Y at scale 1.2: `4000 / (sin(35°) × 1.2) ≈ 5806px`.
+
+**Station B coordinates (Playwright-verified):**
+- Substrate: `left=5567px, top=833px`
+- Derived camera center: `((640+6400)/1.2, (360+1000)/1.2) = (5867, 1133)` shifted 300px left/up
+- Camera stop: `x=-6400, y=-1000, scale=1.2, rotateX=35`
 
 ## Design Decisions Made
 - `invert(1)` is the correct filter for black-on-transparent SVG → white linework
@@ -123,12 +131,17 @@ of the canvas. Need to:
 - DOF blur must include `invert(1)` in the blurred state or lines turn black again
 - `perspective` on *parent*, `preserve-3d` on *element* — CSS 3D requires this hierarchy
 - `useLayoutEffect` is mandatory for any GSAP initialization that sets initial visual state
+- DOF blur fires from Station A only; Station B has no `onLift` (blur already active)
 
 ## Skills Used
 - `frontend-design` — shop-floor blueprint aesthetic, blending modes
 - `systematic-debugging` — root cause analysis for FOUC and invisible component bugs
+- `impeccable` — spatial design, 4pt grid, touch targets for ProjectZone
 
 ---
 
-> **Next session start:** Review Task 6, run Playwright scroll calibration, then move on to
-> adding a second `<ProjectZone>` station at the tilted camera stop with new coordinates.
+> **Next session:** Rig is complete. Likely directions:
+> - Add real video/image content inside the ProjectZone circles
+> - Add Station C (third whip-pan stop) at a new drawing detail
+> - Integrate title block / general notes into the drawing-package layout
+> - Hook the Drawing Package page into the main portfolio nav
