@@ -149,7 +149,7 @@ export function ProjectZone({ id, title, top, left, onLift }: ProjectZoneProps) 
         <div 
           ref={labelRef}
           className="absolute opacity-0 -bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/95 backdrop-blur-sm border-2 border-blue-500 px-6 py-2.5 shadow-[0_4px_20px_rgba(59,130,246,0.3)] whitespace-nowrap flex items-center gap-4 group-hover:scale-105 transition-transform duration-300"
-          style={{ transformPerspective: 500 }}
+          style={{ perspective: '500px' }}
         >
           <div className="flex items-center justify-center bg-blue-500 text-slate-900 font-mono font-bold text-lg h-7 min-w-[28px] px-1 rounded-sm">
             {id}

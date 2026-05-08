@@ -357,14 +357,18 @@ git commit -m "fix: recalibrate camera coordinates after perspective tilt"
 
 ## Completion Checklist
 
-- [ ] SVG asset integrated with unified white linework
-- [ ] CSS 3D stage active (`perspective` on container, `preserve-3d` on substrate)
-- [ ] Whip-pans stay flat; final stop tilts to `rotateX: 62deg`
-- [ ] `ProjectZone` lifts with `z: 400` when IntersectionObserver triggers
-- [ ] Depth-of-field blur fires on background layer when lift starts
-- [ ] Camera coordinates recalibrated for perspective
-- [ ] All Playwright screenshots confirm visual output at each step
+- [x] SVG asset integrated with unified white linework — `invert(1)` filter on black-on-transparent SVG ✅ commit `81ae35c`
+- [x] CSS 3D stage active (`perspective: 1800px` on container, `preserve-3d` on substrate) ✅ commit `a1635b3`
+- [x] Whip-pans stay flat (`rotateX: 0`); final stop tilts to `rotateX: 62deg` ✅ commit `a1635b3`
+- [x] `ProjectZone` lifts with `z: 400, scale: 1.08` when IntersectionObserver triggers ✅ commit `a1635b3`
+- [x] Depth-of-field blur (`blur(10px)`) fires on background layer when lift starts via `onLift` callback ✅ commit `a1635b3`
+- [ ] **Camera coordinates recalibrated for perspective** ⏳ Task 6 — next session
+- [x] Playwright screenshots confirm visual output at key steps ✅
 
 ---
 
-> **Waiting on:** SVG asset from user before Task 1 can begin. Tasks 2-5 can proceed immediately.
+> **Status as of 2026-05-08:** Tasks 1–5 complete and pushed. The 3D rig is fully wired.
+> Verified working: initial ProjectZone animation, SVG white linework, DOF blur trigger.
+> **Task 6 (coordinate recalibration)** is the only remaining item — requires a Playwright
+> scroll-to-end screenshot loop to dial in x/y/scale values for the perspective-distorted final stop.
+> Also pending: `perspective: '500px'` lint fix on `labelRef` div (`transformPerspective` → `perspective`).
