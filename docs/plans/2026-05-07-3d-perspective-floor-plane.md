@@ -367,18 +367,36 @@ git commit -m "fix: recalibrate camera coordinates after perspective tilt"
 
 ---
 
-## Living Context — Station Map (as of 2026-05-08)
+## CURRENT STATE & COORDINATES (THE MAP)
 
-| Station | id | Title | Substrate (left, top) | Camera stop (x, y, scale, rotateX) |
-|---|---|---|---|---|
-| A | `"A"` | TRIGGER GUARD RADIUS | `left=1450px, top=3200px` | `x=-1400, y=-3730, scale=1.2, rotateX=0` (start) |
-| B | `"B"` | BUFFER TUBE SOCKET | `left=5567px, top=833px` | `x=-6400, y=-1000, scale=1.2, rotateX=35` (tilt stop) |
+> **This section MUST be updated by the AI whenever a new spatial component is added,**
+> **a coordinate is adjusted, or any geometry constant changes. Update it mid-session if needed.**
+> This is the canonical source of truth. `.continue-here.md` mirrors it — if they disagree, this file wins.
 
-**Geometry note:** `rotateX: 35` + `perspective: 4000px` keeps all content within focal plane.
-Max safe substrate Y at scale 1.2: `4000 / (sin(35°) × 1.2) ≈ 5806px`.
+### Map Substrate (The 3D Rig)
+
+- **Asset:** `AR-15-Lower-Reciever-v2.svg` (`invert(1)` filter for white linework, `mix-blend-screen` on dark background)
+- **Native Resolution:** 8800px (W) × 6800px (H)
+- **Geometry:** Outer container `perspective: 4000px`, substrate `transformStyle: preserve-3d`
+- **Max safe substrate Y** at `scale: 1.2`: `4000 / (sin(35°) × 1.2) ≈ 5806px` — never exceed this or content goes past focal plane and becomes invisible
+
+### Active Stations & Camera Stops
+
+**Station A** [`id="A"`, TRIGGER GUARD RADIUS]
+- Component Position: `left: 1450px, top: 3200px`
+- Camera Stop: `x: -1400, y: -3730, scale: 1.2, rotateX: 0` *(flat start — triggers DOF blur via `onLift`)*
+
+**Station B** [`id="B"`, BUFFER TUBE SOCKET]
+- Component Position: `left: 5567px, top: 833px`
+- Camera Stop: `x: -6400, y: -1000, scale: 1.2, rotateX: 35` *(35-degree tilted stop — no `onLift`, DOF already active)*
+
+**[Hero / Title Block]** — Pending placement.
+
+---
 
 > **Status as of 2026-05-08 (evening):** ALL TASKS COMPLETE. Plan fully executed.
 > Both stations planted and verified via Playwright. Station B (Buffer Tube Socket) renders
 > in the 35-deg tilted perspective view with the IntersectionObserver detail circle animating in.
 > DOF blur fires from Station A only. Ready for content work: real video/asset in the circles,
 > more stations, or title block integration.
+
