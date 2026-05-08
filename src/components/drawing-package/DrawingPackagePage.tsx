@@ -8,12 +8,13 @@ gsap.registerPlugin(ScrollTrigger);
 export function DrawingPackagePage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const substrateRef = useRef<HTMLDivElement>(null);
-  const bgLayerRef = useRef<HTMLDivElement>(null);
+  const bgLayerRef = useRef<HTMLImageElement>(null);
 
   // Task 5: DOF blur callback — fires when ProjectZone starts its translateZ lift
+  // Keep invert(1) in the blur state so the linework stays white while blurring
   const handleLift = useCallback(() => {
     gsap.to(bgLayerRef.current, {
-      filter: 'grayscale(100%) contrast(400%) brightness(120%) blur(10px)',
+      filter: 'invert(1) blur(10px)',
       duration: 1.0,
       ease: 'power2.inOut',
     });
@@ -79,17 +80,21 @@ export function DrawingPackagePage() {
           transformStyle: 'preserve-3d',
         }}
       >
-        {/* Background image layer — isolated for Task 5 DOF blur */}
-        <div
+        {/* SVG drawing layer — black-on-transparent SVG, invert(1) makes lines white.
+             mix-blend-screen lets white lines glow through on the dark bg-slate-950.
+             Isolated ref for Task 5 DOF blur. */}
+        <img
           ref={bgLayerRef}
-          className="absolute inset-0 bg-no-repeat mix-blend-screen pointer-events-none"
+          src={`${import.meta.env.BASE_URL}assets/images/Lower Receiver-Machined Forging (1).svg`}
+          className="absolute inset-0 pointer-events-none select-none mix-blend-screen"
           style={{
-            backgroundImage: `url('${import.meta.env.BASE_URL}assets/images/AR-15-Lower-Reciever-Forged.webp')`,
-            backgroundSize: '100% 100%',
-            backgroundPosition: 'top left',
-            filter: 'grayscale(100%) contrast(400%) brightness(120%)',
-            opacity: 0.8,
+            width: '8800px',
+            height: '6800px',
+            filter: 'invert(1)',
+            opacity: 0.9,
           }}
+          alt=""
+          aria-hidden="true"
         />
         <ProjectZone
           id="A"
