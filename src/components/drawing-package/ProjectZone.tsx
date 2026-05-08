@@ -6,9 +6,10 @@ export interface ProjectZoneProps {
   title: string;
   top: string;
   left: string;
+  onLift?: () => void; // Task 4/5: fires when translateZ lift starts, triggers DOF blur
 }
 
-export function ProjectZone({ id, title, top, left }: ProjectZoneProps) {
+export function ProjectZone({ id, title, top, left, onLift }: ProjectZoneProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const pathRef = useRef<SVGPathElement>(null);
   const dotRef = useRef<SVGCircleElement>(null);
@@ -70,7 +71,15 @@ export function ProjectZone({ id, title, top, left }: ProjectZoneProps) {
                 filter: "blur(0px)",
                 duration: 0.4,
                 ease: "power1.out",
-              }, "-=0.4");
+              }, "-=0.4")
+              // Task 4: lift the whole container off the floor plane toward camera
+              .to(containerRef.current, {
+                z: 400,
+                scale: 1.08,
+                duration: 1.2,
+                ease: "power2.out",
+                onStart: () => onLift?.(),
+              }, "-=0.3");
             }
           }
         });
@@ -91,7 +100,7 @@ export function ProjectZone({ id, title, top, left }: ProjectZoneProps) {
     <div
       ref={containerRef}
       className="absolute pointer-events-none w-[600px] h-[500px]"
-      style={{ top, left }}
+      style={{ top, left, transformStyle: 'preserve-3d' }}
     >
       {/* The Leader Line */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]" fill="none" viewBox="0 0 600 500">
