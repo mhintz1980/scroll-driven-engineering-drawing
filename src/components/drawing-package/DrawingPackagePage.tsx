@@ -40,21 +40,23 @@ export function DrawingPackagePage() {
         rotateX: 0, // explicitly flat — Task 3
       });
 
-      // Task 3: First stop — whip-pan departs flat, no tilt
+      // Task 3: First stop — whip-pan departs flat, covering ground across drawing
       tl.to(substrateRef.current, {
-        x: -4500,
-        y: -3000,
-        scale: 1.8,
+        x: -4800,
+        y: -2000,
+        scale: 1.6,
         rotateX: 0,
         duration: 1,
         ease: 'power3.inOut',
       })
-      // Task 3: Second stop — tilts into perspective as camera decelerates
+      // Task 3/6: Second stop — decelerates and tilts into 35-deg floor-plane view.
+      // perspective:4000px keeps substrate Y≤4000 within focal plane at scale 1.2.
+      // Target: upper-right quadrant of drawing (substrate ~5500x, ~1500y).
       .to(substrateRef.current, {
-        x: -7500,
-        y: -5500,
-        scale: 1.3,
-        rotateX: 62,
+        x: -6400,
+        y: -1000,
+        scale: 1.2,
+        rotateX: 35,
         duration: 1,
         ease: 'power3.inOut',
       });
@@ -68,7 +70,7 @@ export function DrawingPackagePage() {
     <div
       ref={containerRef}
       className="w-screen h-screen overflow-hidden bg-slate-950"
-      style={{ perspective: '1800px', perspectiveOrigin: '50% 40%' }}
+      style={{ perspective: '4000px', perspectiveOrigin: '50% 40%' }}
     >
       {/* Task 2: preserve-3d so children share the same 3D coordinate space */}
       <div
@@ -102,6 +104,17 @@ export function DrawingPackagePage() {
           top="3200px"
           left="1450px"
           onLift={handleLift}
+        />
+        {/* Station B — Buffer Tube Socket / Pistol Grip Mount
+            Substrate coords: left=5567px, top=833px
+            Derived from final pan stop: x=-6400, y=-1000, scale=1.2
+            Center = ((640+6400)/1.2, (360+1000)/1.2) = (5867, 1133)
+            Shifted 300px left and 300px up to sit on the part geometry  */}
+        <ProjectZone
+          id="B"
+          title="BUFFER TUBE SOCKET"
+          top="833px"
+          left="5567px"
         />
       </div>
     </div>
