@@ -357,18 +357,28 @@ git commit -m "fix: recalibrate camera coordinates after perspective tilt"
 
 ## Completion Checklist
 
-- [x] SVG asset integrated with unified white linework — `invert(1)` filter on black-on-transparent SVG ✅ commit `81ae35c`
-- [x] CSS 3D stage active (`perspective: 1800px` on container, `preserve-3d` on substrate) ✅ commit `a1635b3`
-- [x] Whip-pans stay flat (`rotateX: 0`); final stop tilts to `rotateX: 62deg` ✅ commit `a1635b3`
-- [x] `ProjectZone` lifts with `z: 400, scale: 1.08` when IntersectionObserver triggers ✅ commit `a1635b3`
-- [x] Depth-of-field blur (`blur(10px)`) fires on background layer when lift starts via `onLift` callback ✅ commit `a1635b3`
-- [ ] **Camera coordinates recalibrated for perspective** ⏳ Task 6 — next session
-- [x] Playwright screenshots confirm visual output at key steps ✅
+- [x] SVG asset integrated with unified white linework — `invert(1)` on black-on-transparent SVG ✅ `81ae35c`
+- [x] CSS 3D stage active (`perspective: 4000px` on container, `preserve-3d` on substrate) ✅ `a1635b3` / `6794de2`
+- [x] Whip-pans stay flat (`rotateX: 0`); final stop tilts to `rotateX: 35deg` ✅ `6794de2`
+- [x] `ProjectZone` lifts with `z: 400, scale: 1.08` when IntersectionObserver triggers ✅ `a1635b3`
+- [x] Depth-of-field blur (`blur(10px)`) fires on background layer when lift starts via `onLift` ✅ `a1635b3`
+- [x] **Camera coordinates recalibrated for perspective** ✅ `6794de2`
+- [x] Playwright screenshots confirm visual output at each step ✅
 
 ---
 
-> **Status as of 2026-05-08:** Tasks 1–5 complete and pushed. The 3D rig is fully wired.
-> Verified working: initial ProjectZone animation, SVG white linework, DOF blur trigger.
-> **Task 6 (coordinate recalibration)** is the only remaining item — requires a Playwright
-> scroll-to-end screenshot loop to dial in x/y/scale values for the perspective-distorted final stop.
-> Also pending: `perspective: '500px'` lint fix on `labelRef` div (`transformPerspective` → `perspective`).
+## Living Context — Station Map (as of 2026-05-08)
+
+| Station | id | Title | Substrate (left, top) | Camera stop (x, y, scale, rotateX) |
+|---|---|---|---|---|
+| A | `"A"` | TRIGGER GUARD RADIUS | `left=1450px, top=3200px` | `x=-1400, y=-3730, scale=1.2, rotateX=0` (start) |
+| B | `"B"` | BUFFER TUBE SOCKET | `left=5567px, top=833px` | `x=-6400, y=-1000, scale=1.2, rotateX=35` (tilt stop) |
+
+**Geometry note:** `rotateX: 35` + `perspective: 4000px` keeps all content within focal plane.
+Max safe substrate Y at scale 1.2: `4000 / (sin(35°) × 1.2) ≈ 5806px`.
+
+> **Status as of 2026-05-08 (evening):** ALL TASKS COMPLETE. Plan fully executed.
+> Both stations planted and verified via Playwright. Station B (Buffer Tube Socket) renders
+> in the 35-deg tilted perspective view with the IntersectionObserver detail circle animating in.
+> DOF blur fires from Station A only. Ready for content work: real video/asset in the circles,
+> more stations, or title block integration.
