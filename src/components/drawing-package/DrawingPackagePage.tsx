@@ -5,6 +5,13 @@ import { ProjectZone } from './ProjectZone';
 
 gsap.registerPlugin(ScrollTrigger);
 
+const getStationBStop = () => ({
+  x: -6320 + 0.495 * (window.innerWidth - 975),
+  y: -740 + 0.47 * (window.innerHeight - 550),
+  scale: 1.2,
+  rotateX: 35,
+});
+
 export function DrawingPackagePage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const substrateRef = useRef<HTMLDivElement>(null);
@@ -22,6 +29,10 @@ export function DrawingPackagePage() {
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
+      gsap.set(bgLayerRef.current, {
+        filter: 'invert(1) blur(0px)',
+      });
+
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: containerRef.current,
@@ -29,6 +40,7 @@ export function DrawingPackagePage() {
           start: 'top top',
           end: '+=2500',
           scrub: 1.2,
+          invalidateOnRefresh: true,
         },
       });
 
@@ -51,12 +63,13 @@ export function DrawingPackagePage() {
       })
       // Task 3/6: Second stop — decelerates and tilts into 35-deg floor-plane view.
       // perspective:4000px keeps substrate Y≤4000 within focal plane at scale 1.2.
-      // Target: upper-right quadrant of drawing (substrate ~5500x, ~1500y).
+      // Target: upper-right quadrant of drawing, viewport-corrected so Station B
+      // stays centered across calibration, desktop, and mobile browser heights.
       .to(substrateRef.current, {
-        x: -6400,
-        y: -1000,
-        scale: 1.2,
-        rotateX: 35,
+        x: () => getStationBStop().x,
+        y: () => getStationBStop().y,
+        scale: () => getStationBStop().scale,
+        rotateX: () => getStationBStop().rotateX,
         duration: 1,
         ease: 'power3.inOut',
       });
@@ -107,9 +120,8 @@ export function DrawingPackagePage() {
         />
         {/* Station B — Buffer Tube Socket / Pistol Grip Mount
             Substrate coords: left=5567px, top=833px
-            Derived from final pan stop: x=-6400, y=-1000, scale=1.2
-            Center = ((640+6400)/1.2, (360+1000)/1.2) = (5867, 1133)
-            Shifted 300px left and 300px up to sit on the part geometry  */}
+            Camera stop is viewport-corrected from a 975x550 calibration baseline:
+            x=-6320 + 0.495*(vw-975), y=-740 + 0.47*(vh-550), scale=1.2, rotateX=35. */}
         <ProjectZone
           id="B"
           title="BUFFER TUBE SOCKET"

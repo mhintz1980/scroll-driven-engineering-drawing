@@ -20,19 +20,39 @@ export function ProjectZone({ id, title, top, left, onLift }: ProjectZoneProps) 
   const hasTriggered = useRef(false);
 
   useEffect(() => {
-    // We only want to animate once when it comes into view
+    const resetZone = () => {
+      if (pathRef.current && dotRef.current && dotInnerRef.current && circleRef.current && labelRef.current && textRef.current && containerRef.current) {
+        gsap.killTweensOf([
+          containerRef.current,
+          pathRef.current,
+          dotRef.current,
+          dotInnerRef.current,
+          circleRef.current,
+          labelRef.current,
+          textRef.current,
+        ]);
+
+        const length = pathRef.current.getTotalLength();
+        gsap.set(pathRef.current, { strokeDasharray: length, strokeDashoffset: length });
+        gsap.set([dotRef.current, dotInnerRef.current], { scale: 0, opacity: 0, transformOrigin: 'center' });
+        gsap.set(circleRef.current, { scale: 0.5, opacity: 0, rotationZ: -15 });
+        gsap.set(labelRef.current, { y: 20, opacity: 0, rotateX: 90 });
+        gsap.set(textRef.current, { opacity: 0, filter: 'blur(4px)' });
+        gsap.set(containerRef.current, { z: 0, scale: 1 });
+      }
+    };
+
+    resetZone();
+
+    // Replay the local station sequence each time the camera brings it into view.
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && !hasTriggered.current) {
             hasTriggered.current = true;
-            
+
             if (pathRef.current && dotRef.current && dotInnerRef.current && circleRef.current && labelRef.current && textRef.current) {
-              const length = pathRef.current.getTotalLength();
-              gsap.set(pathRef.current, { strokeDasharray: length, strokeDashoffset: length });
-              gsap.set([dotRef.current, dotInnerRef.current], { scale: 0, opacity: 0, transformOrigin: "center" });
-              gsap.set(labelRef.current, { y: 20, opacity: 0, rotateX: 90 });
-              gsap.set(textRef.current, { opacity: 0, filter: "blur(4px)" });
+              resetZone();
 
               const tl = gsap.timeline();
 
@@ -81,6 +101,9 @@ export function ProjectZone({ id, title, top, left, onLift }: ProjectZoneProps) 
                 onStart: () => onLift?.(),
               }, "-=0.3");
             }
+          } else if (!entry.isIntersecting && hasTriggered.current) {
+            hasTriggered.current = false;
+            resetZone();
           }
         });
       },
@@ -94,7 +117,7 @@ export function ProjectZone({ id, title, top, left, onLift }: ProjectZoneProps) 
     }
 
     return () => observer.disconnect();
-  }, []);
+  }, [onLift]);
 
   return (
     <div

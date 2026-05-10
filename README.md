@@ -36,10 +36,10 @@ This is the **source of truth** for:
 
 ### 3. Read the Most Recent Session Handoff
 
-Session handoffs live in `docs/plans/` and follow the naming pattern `YYYY-MM-DD-*-handoff.md`. The most recent one as of 2026-05-08 is:
+Session handoffs live in `docs/plans/` and follow the naming pattern `YYYY-MM-DD-*-handoff.md`. The most recent one as of 2026-05-09 is:
 
 ```
-docs/plans/2026-05-08-3d-rig-session-handoff.md
+docs/plans/2026-05-09-spatial-rig-audit-fixes-handoff.md
 ```
 
 Handoffs document: what was built, what bugs were found and how they were fixed, the exact state of key files after the session, and concrete "next session" directions.
@@ -72,7 +72,7 @@ PRODUCT.md                      ← Product identity for impeccable skill
 docs/
   plans/
     2026-05-07-3d-perspective-floor-plane.md   ← Living context: station map, task checklist
-    2026-05-08-3d-rig-session-handoff.md       ← Most recent session handoff
+    2026-05-09-spatial-rig-audit-fixes-handoff.md ← Most recent session handoff
     prompt-recent/                             ← Archived prompt history
 src/
   components/
@@ -122,12 +122,12 @@ cd remotion && npm run studio
 
 ---
 
-## 🗺 Current Station Map (as of 2026-05-08)
+## 🗺 Current Station Map (as of 2026-05-09)
 
 | Station | id | Title | Substrate pos | GSAP camera stop |
 |---|---|---|---|---|
 | A | `"A"` | TRIGGER GUARD RADIUS | `left: 1450px, top: 3200px` | `x=-1400, y=-3730, scale=1.2, rotateX=0` *(start)* |
-| B | `"B"` | BUFFER TUBE SOCKET | `left: 5567px, top: 833px` | `x=-6400, y=-1000, scale=1.2, rotateX=35` *(tilt stop)* |
+| B | `"B"` | BUFFER TUBE SOCKET | `left: 5567px, top: 833px` | `x=-6320 + 0.495*(vw - 975), y=-740 + 0.47*(vh - 550), scale=1.2, rotateX=35` *(viewport-aware tilt stop)* |
 
 **Key geometry constants:**
 - `perspective: 4000px` on container (never lower — content goes past focal plane)
