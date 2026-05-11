@@ -17,9 +17,10 @@ export interface ProjectZoneProps {
   top: string;
   left: string;
   layout: ProjectZoneLayout;
+  imageSrc?: string;
 }
 
-export function ProjectZone({ id, title, top, left, layout }: ProjectZoneProps) {
+export function ProjectZone({ id, title, top, left, layout, imageSrc }: ProjectZoneProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const pathRef = useRef<SVGPathElement>(null);
   const dotRef = useRef<SVGCircleElement>(null);
@@ -28,6 +29,7 @@ export function ProjectZone({ id, title, top, left, layout }: ProjectZoneProps) 
   const labelRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const hasTriggered = useRef(false);
+  const calibrationMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('calibrate');
 
   useLayoutEffect(() => {
     const resetZone = () => {
@@ -129,6 +131,19 @@ export function ProjectZone({ id, title, top, left, layout }: ProjectZoneProps) 
         );
     };
 
+    if (calibrationMode) {
+      if (pathRef.current && dotRef.current && dotInnerRef.current && circleRef.current && labelRef.current && textRef.current && containerRef.current) {
+        gsap.set(pathRef.current, { strokeDasharray: 'none', strokeDashoffset: 0 });
+        gsap.set([dotRef.current, dotInnerRef.current], { scale: 1, opacity: 1, transformOrigin: 'center' });
+        gsap.set(circleRef.current, { scale: 1, opacity: 1, rotationZ: 0 });
+        gsap.set(labelRef.current, { y: 0, opacity: 1, rotateX: 0 });
+        gsap.set(textRef.current, { opacity: 1, filter: 'blur(0px)' });
+        gsap.set(containerRef.current, { z: 0, scale: 1 });
+      }
+
+      return undefined;
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -156,6 +171,9 @@ export function ProjectZone({ id, title, top, left, layout }: ProjectZoneProps) 
       style={{ top, left, transformStyle: 'preserve-3d' }}
       data-zone-id={id}
     >
+      {calibrationMode ? (
+        <div className="absolute inset-0 border border-amber-400/60" />
+      ) : null}
       {/* The Leader Line */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]" fill="none" viewBox="0 0 600 500">
         <path
@@ -208,9 +226,19 @@ export function ProjectZone({ id, title, top, left, layout }: ProjectZoneProps) 
           <div className="h-full w-px bg-blue-500/20 absolute" />
         </div>
 
-        {/* Video Placeholder */}
-        <div ref={textRef} className="z-10 opacity-0 text-blue-400/80 font-mono text-sm tracking-[0.2em] text-center px-4 mix-blend-screen bg-slate-900/50 p-2 border border-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.1)]">
-          CAD_SPIN_RENDER.mp4
+        {/* Project Image */}
+        <div ref={textRef} className="z-10 opacity-0 absolute inset-6 rounded-full overflow-hidden">
+          {imageSrc ? (
+            <img
+              src={imageSrc}
+              alt={title}
+              className="w-full h-full object-cover rounded-full mix-blend-luminosity opacity-80"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-blue-400/80 font-mono text-sm tracking-[0.2em] bg-slate-900/50 border border-blue-500/20">
+              CAD_SPIN_RENDER.mp4
+            </div>
+          )}
         </div>
 
         {/* Label Box */}
