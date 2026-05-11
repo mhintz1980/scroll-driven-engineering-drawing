@@ -1,9 +1,37 @@
-import { useCallback, useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ProjectZone } from './ProjectZone';
+import '../../styles/drawing-package.css';
 
 gsap.registerPlugin(ScrollTrigger);
+
+const STATION_A_LAYOUT = {
+  pathD: 'M 52 388 L 144 388 L 144 260 L 56 218',
+  anchor: { x: 52, y: 388 },
+  circleStyle: {
+    top: '68px',
+    left: '32px',
+  },
+} as const;
+
+const STATION_B_LAYOUT = {
+  pathD: 'M 64 404 L 176 404 L 176 254 L 28 198',
+  anchor: { x: 64, y: 404 },
+  circleStyle: {
+    top: '56px',
+    left: '12px',
+  },
+} as const;
+
+const getStationAStop = () => ({
+  x: window.innerWidth < 768
+    ? -1400 + 0.55 * (window.innerWidth - 975)
+    : -1400,
+  y: -3730,
+  scale: 1.2,
+  rotateX: 0,
+});
 
 const getStationBStop = () => ({
   x: -6320 + 0.495 * (window.innerWidth - 975),
@@ -17,18 +45,20 @@ export function DrawingPackagePage() {
   const substrateRef = useRef<HTMLDivElement>(null);
   const bgLayerRef = useRef<HTMLImageElement>(null);
 
-  // Task 5: DOF blur callback — fires when ProjectZone starts its translateZ lift
-  // Keep invert(1) in the blur state so the linework stays white while blurring
-  const handleLift = useCallback(() => {
-    gsap.to(bgLayerRef.current, {
-      filter: 'invert(1) blur(10px)',
-      duration: 1.0,
-      ease: 'power2.inOut',
-    });
+  useEffect(() => {
+    document.documentElement.classList.add('drawing-package-route');
+    document.body.classList.add('drawing-package-route');
+
+    return () => {
+      document.documentElement.classList.remove('drawing-package-route');
+      document.body.classList.remove('drawing-package-route');
+    };
   }, []);
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
+      const stationAStop = getStationAStop();
+
       gsap.set(bgLayerRef.current, {
         filter: 'invert(1) blur(0px)',
       });
@@ -46,10 +76,10 @@ export function DrawingPackagePage() {
 
       // Task 2 & 3: Camera starts flat, centered on ProjectZone
       gsap.set(substrateRef.current, {
-        x: -1400,
-        y: -3730,
-        scale: 1.2,
-        rotateX: 0, // explicitly flat — Task 3
+        x: stationAStop.x,
+        y: stationAStop.y,
+        scale: stationAStop.scale,
+        rotateX: stationAStop.rotateX, // explicitly flat — Task 3
       });
 
       // Task 3: First stop — whip-pan departs flat, covering ground across drawing
@@ -61,6 +91,11 @@ export function DrawingPackagePage() {
         duration: 1,
         ease: 'power3.inOut',
       })
+      .to(bgLayerRef.current, {
+        filter: 'invert(1) blur(10px)',
+        duration: 0.65,
+        ease: 'none',
+      }, 0.18)
       // Task 3/6: Second stop — decelerates and tilts into 35-deg floor-plane view.
       // perspective:4000px keeps substrate Y≤4000 within focal plane at scale 1.2.
       // Target: upper-right quadrant of drawing, viewport-corrected so Station B
@@ -82,7 +117,7 @@ export function DrawingPackagePage() {
     // Task 2: perspective on the outer container establishes the 3D stage
     <div
       ref={containerRef}
-      className="w-screen h-screen overflow-hidden bg-slate-950"
+      className="drawing-package drawing-scene w-screen h-screen overflow-hidden bg-slate-950"
       style={{ perspective: '4000px', perspectiveOrigin: '50% 40%' }}
     >
       {/* Task 2: preserve-3d so children share the same 3D coordinate space */}
@@ -116,7 +151,7 @@ export function DrawingPackagePage() {
           title="TRIGGER GUARD RADIUS"
           top="3200px"
           left="1450px"
-          onLift={handleLift}
+          layout={STATION_A_LAYOUT}
         />
         {/* Station B — Buffer Tube Socket / Pistol Grip Mount
             Substrate coords: left=5567px, top=833px
@@ -127,6 +162,7 @@ export function DrawingPackagePage() {
           title="BUFFER TUBE SOCKET"
           top="833px"
           left="5567px"
+          layout={STATION_B_LAYOUT}
         />
       </div>
     </div>

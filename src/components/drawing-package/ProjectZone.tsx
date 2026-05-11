@@ -1,15 +1,25 @@
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
+import type { CSSProperties } from 'react';
 import gsap from 'gsap';
+
+export interface ProjectZoneLayout {
+  pathD: string;
+  anchor: {
+    x: number;
+    y: number;
+  };
+  circleStyle: CSSProperties;
+}
 
 export interface ProjectZoneProps {
   id: string;
   title: string;
   top: string;
   left: string;
-  onLift?: () => void; // Task 4/5: fires when translateZ lift starts, triggers DOF blur
+  layout: ProjectZoneLayout;
 }
 
-export function ProjectZone({ id, title, top, left, onLift }: ProjectZoneProps) {
+export function ProjectZone({ id, title, top, left, layout }: ProjectZoneProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const pathRef = useRef<SVGPathElement>(null);
   const dotRef = useRef<SVGCircleElement>(null);
@@ -19,7 +29,7 @@ export function ProjectZone({ id, title, top, left, onLift }: ProjectZoneProps) 
   const textRef = useRef<HTMLDivElement>(null);
   const hasTriggered = useRef(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const resetZone = () => {
       if (pathRef.current && dotRef.current && dotInnerRef.current && circleRef.current && labelRef.current && textRef.current && containerRef.current) {
         gsap.killTweensOf([
@@ -43,93 +53,114 @@ export function ProjectZone({ id, title, top, left, onLift }: ProjectZoneProps) 
     };
 
     resetZone();
+    const container = containerRef.current;
 
-    // Replay the local station sequence each time the camera brings it into view.
+    if (!container) {
+      return undefined;
+    }
+
+    const playZoneIntro = () => {
+      if (!pathRef.current || !dotRef.current || !dotInnerRef.current || !circleRef.current || !labelRef.current || !textRef.current) {
+        return;
+      }
+
+      resetZone();
+
+      const tl = gsap.timeline();
+
+      tl.to([dotRef.current, dotInnerRef.current], {
+        scale: 1,
+        opacity: 1,
+        duration: 0.4,
+        stagger: 0.1,
+        ease: 'back.out(2.5)',
+      })
+        .to(
+          pathRef.current,
+          {
+            strokeDashoffset: 0,
+            duration: 0.8,
+            ease: 'power2.inOut',
+          },
+          '-=0.2',
+        )
+        .fromTo(
+          circleRef.current,
+          { scale: 0.5, opacity: 0, rotationZ: -15 },
+          {
+            scale: 1,
+            opacity: 1,
+            rotationZ: 0,
+            duration: 1,
+            ease: 'expo.out',
+          },
+          '-=0.3',
+        )
+        .to(
+          labelRef.current,
+          {
+            y: 0,
+            opacity: 1,
+            rotateX: 0,
+            duration: 0.6,
+            ease: 'back.out(1.7)',
+          },
+          '-=0.6',
+        )
+        .to(
+          textRef.current,
+          {
+            opacity: 1,
+            filter: 'blur(0px)',
+            duration: 0.4,
+            ease: 'power1.out',
+          },
+          '-=0.4',
+        )
+        .to(
+          containerRef.current,
+          {
+            z: 400,
+            scale: 1.08,
+            duration: 1.2,
+            ease: 'power2.out',
+          },
+          '-=0.3',
+        );
+    };
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && !hasTriggered.current) {
             hasTriggered.current = true;
-
-            if (pathRef.current && dotRef.current && dotInnerRef.current && circleRef.current && labelRef.current && textRef.current) {
-              resetZone();
-
-              const tl = gsap.timeline();
-
-              tl.to([dotRef.current, dotInnerRef.current], {
-                scale: 1,
-                opacity: 1,
-                duration: 0.4,
-                stagger: 0.1,
-                ease: "back.out(2.5)",
-              })
-              .to(pathRef.current, {
-                strokeDashoffset: 0,
-                duration: 0.8,
-                ease: "power2.inOut",
-              }, "-=0.2")
-              .fromTo(circleRef.current, 
-                { scale: 0.5, opacity: 0, rotationZ: -15 },
-                {
-                  scale: 1,
-                  opacity: 1,
-                  rotationZ: 0,
-                  duration: 1,
-                  ease: "expo.out",
-                },
-                "-=0.3"
-              )
-              .to(labelRef.current, {
-                y: 0,
-                opacity: 1,
-                rotateX: 0,
-                duration: 0.6,
-                ease: "back.out(1.7)",
-              }, "-=0.6")
-              .to(textRef.current, {
-                opacity: 1,
-                filter: "blur(0px)",
-                duration: 0.4,
-                ease: "power1.out",
-              }, "-=0.4")
-              // Task 4: lift the whole container off the floor plane toward camera
-              .to(containerRef.current, {
-                z: 400,
-                scale: 1.08,
-                duration: 1.2,
-                ease: "power2.out",
-                onStart: () => onLift?.(),
-              }, "-=0.3");
-            }
-          } else if (!entry.isIntersecting && hasTriggered.current) {
-            hasTriggered.current = false;
-            resetZone();
+            playZoneIntro();
+            observer.unobserve(container);
           }
         });
       },
       {
-        threshold: 0.1,
-      }
+        threshold: 0.2,
+      },
     );
 
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
-    }
+    observer.observe(container);
 
     return () => observer.disconnect();
-  }, [onLift]);
+  }, [layout]);
 
   return (
     <div
       ref={containerRef}
       className="absolute pointer-events-none w-[600px] h-[500px]"
       style={{ top, left, transformStyle: 'preserve-3d' }}
+      data-zone-id={id}
     >
       {/* The Leader Line */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]" fill="none" viewBox="0 0 600 500">
         <path
           ref={pathRef}
-          d="M 20 480 L 150 480 L 410 340"
+          d={layout.pathD}
           className="stroke-blue-500"
           strokeWidth="3"
           strokeLinecap="round"
@@ -137,14 +168,28 @@ export function ProjectZone({ id, title, top, left, onLift }: ProjectZoneProps) 
           style={{ strokeDasharray: 1000, strokeDashoffset: 1000 }}
         />
         {/* Anchor point dot with inner core */}
-        <circle ref={dotRef} cx="20" cy="480" r="8" className="fill-slate-900 stroke-blue-500 stroke-[3px] scale-0 opacity-0 transform-origin-center" />
-        <circle ref={dotInnerRef} cx="20" cy="480" r="3" className="fill-blue-400 scale-0 opacity-0 transform-origin-center" />
+        <circle
+          ref={dotRef}
+          cx={layout.anchor.x}
+          cy={layout.anchor.y}
+          r="8"
+          className="fill-slate-900 stroke-blue-500 stroke-[3px] scale-0 opacity-0 transform-origin-center"
+        />
+        <circle
+          ref={dotInnerRef}
+          cx={layout.anchor.x}
+          cy={layout.anchor.y}
+          r="3"
+          className="fill-blue-400 scale-0 opacity-0 transform-origin-center"
+        />
       </svg>
 
       {/* The Detail Circle */}
       <div
         ref={circleRef}
-        className="w-[300px] h-[300px] rounded-full absolute top-10 right-10 border-4 border-blue-500 bg-slate-900/90 backdrop-blur-md shadow-[0_0_40px_rgba(59,130,246,0.25),inset_0_0_20px_rgba(59,130,246,0.15)] pointer-events-auto flex items-center justify-center flex-col relative opacity-0 group"
+        className="absolute h-[clamp(180px,31vw,300px)] w-[clamp(180px,31vw,300px)] rounded-full border-4 border-blue-500 bg-slate-900/90 backdrop-blur-md shadow-[0_0_40px_rgba(59,130,246,0.25),inset_0_0_20px_rgba(59,130,246,0.15)] pointer-events-auto flex items-center justify-center flex-col relative opacity-0 group"
+        style={layout.circleStyle}
+        data-zone-circle={id}
       >
         {/* Inner rings for technical aesthetic */}
         <div className="absolute inset-2 rounded-full border border-blue-500/30 border-dashed animate-[spin_60s_linear_infinite]" />
@@ -171,13 +216,14 @@ export function ProjectZone({ id, title, top, left, onLift }: ProjectZoneProps) 
         {/* Label Box */}
         <div 
           ref={labelRef}
-          className="absolute opacity-0 -bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/95 backdrop-blur-sm border-2 border-blue-500 px-6 py-2.5 shadow-[0_4px_20px_rgba(59,130,246,0.3)] whitespace-nowrap flex items-center gap-4 group-hover:scale-105 transition-transform duration-300"
+          className="absolute opacity-0 -bottom-5 left-1/2 -translate-x-1/2 bg-slate-900/95 backdrop-blur-sm border-2 border-blue-500 px-3 py-2 md:-bottom-6 md:px-6 md:py-2.5 shadow-[0_4px_20px_rgba(59,130,246,0.3)] max-w-[11rem] md:max-w-none flex flex-col items-center gap-1 text-center whitespace-normal md:flex-row md:gap-4 md:text-left md:whitespace-nowrap group-hover:scale-105 transition-transform duration-300"
           style={{ perspective: '500px' }}
+          data-zone-label={id}
         >
-          <div className="flex items-center justify-center bg-blue-500 text-slate-900 font-mono font-bold text-lg h-7 min-w-[28px] px-1 rounded-sm">
+          <div className="flex items-center justify-center bg-blue-500 text-slate-900 font-mono font-bold text-sm md:text-lg h-6 min-w-[24px] px-1 md:h-7 md:min-w-[28px] rounded-sm">
             {id}
           </div>
-          <div className="text-slate-100 font-mono text-[13px] font-semibold tracking-widest">
+          <div className="text-slate-100 font-mono text-[10px] md:text-[13px] font-semibold tracking-[0.18em] md:tracking-widest">
             {title}
           </div>
           {/* Decorative corner accents on the label */}

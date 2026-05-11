@@ -57,25 +57,34 @@ The background image now gets an explicit initial GSAP state before the timeline
 filter = invert(1) blur(0px)
 ```
 
-Station A lift still animates it to:
+The GSAP scroll timeline now animates it to:
 
 ```txt
 filter = invert(1) blur(10px)
 ```
 
-This keeps white linework intact and makes the rack-focus behavior explicit.
+This keeps white linework intact, preserves a sharp first stop, and avoids Station A auto-blurring the page on mount.
 
-### ProjectZone Replay Behavior
+### ProjectZone Trigger Behavior
 
-`ProjectZone` now resets local GSAP state when it leaves view:
+`ProjectZone` no longer resets on exit. Each zone now:
 
-- leader path returns to dashed/undrawn state
-- dots hide
-- circle hides and resets scale/rotation
-- label and text return to pre-reveal states
-- container resets from `z: 400, scale: 1.08` to `z: 0, scale: 1`
+- starts from a hidden/dashed GSAP state
+- animates in the first time its `IntersectionObserver` sees it
+- unobserves after that first reveal so the station doesn't fight the scrubbed camera path or re-fire blur logic on re-entry
 
-This allows station leader/circle animations to replay on re-entry.
+This preserves the autonomous local reveal behavior without reintroducing mid-scroll state churn.
+
+### Standalone Route + Overlay Geometry
+
+The route now imports the drawing-package stylesheet directly and applies the `drawing-package` wrapper class. While the route is mounted, `html` and `body` get a `drawing-package-route` class that hides the native scrollbar without disabling GSAP scroll behavior.
+
+Station overlays also changed:
+
+- Station A and Station B now use station-specific leader-line paths and circle placement instead of the shared `top-10 right-10` circle layout
+- the circle uses responsive sizing with `clamp(...)`
+- the label compacts on narrow screens so the phone viewport stays readable
+- Station A adds a narrow-screen x correction below `768px` so the first stop remains visible on phones
 
 ---
 
@@ -83,7 +92,7 @@ This allows station leader/circle animations to replay on re-entry.
 
 | Stop | x | y | scale | rotateX |
 |---|---|---|---|---|
-| Station A | `-1400` | `-3730` | `1.2` | `0` |
+| Station A | `-1400` desktop/tablet, `-1400 + 0.55*(vw - 975)` under `768px` | `-3730` | `1.2` | `0` |
 | Whip transit | `-4800` | `-2000` | `1.6` | `0` |
 | Station B | `-6320 + 0.495*(vw - 975)` | `-740 + 0.47*(vh - 550)` | `1.2` | `35` |
 
@@ -98,20 +107,26 @@ This allows station leader/circle animations to replay on re-entry.
 
 ### Browser Verification
 
-Playwright checked Station B at:
+Playwright checked the standalone route and station framing at:
 
 - `975×550`
 - `1280×720`
 - `1440×900`
 - `390×844`
 
-Result: Station B detail-circle center landed within about 15px of viewport center in all checked viewports.
+Confirmed:
+
+- no navbar
+- no theme toggle
+- no home-page sections on `/drawing-package`
+- initial drawing filter is `invert(1) blur(0px)`
+- final drawing filter is `invert(1) blur(10px)`
+- Station A circle/label are visible at the first stop
+- Station B circle/label are visible at the final stop, including `390×844`
 
 Additional Playwright checks:
 
-- Initial filter: `invert(1) blur(0px)`
-- Lifted filter: `invert(1) blur(10px)`
-- Station reset behavior: `ProjectZone` returns to unlifted local state after leaving view
+- native scrollbar is hidden while the pinned route remains scroll-scrubbable
 
 ### Commands
 
@@ -143,6 +158,7 @@ npm run test
 - `docs/plans/2026-05-09-spatial-rig-audit-fixes-handoff.md`
 - `src/components/drawing-package/DrawingPackagePage.tsx`
 - `src/components/drawing-package/ProjectZone.tsx`
+- `src/styles/drawing-package.css`
 
 Note: `docs/the-plan-worth-doing.md` was already modified before this work and was not edited during this audit fix.
 
