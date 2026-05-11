@@ -164,9 +164,46 @@ Note: `docs/the-plan-worth-doing.md` was already modified before this work and w
 
 ---
 
+## Browser Audit (2026-05-11)
+
+Playwright-driven scroll-state audit at 1908×860 viewport:
+
+### Findings
+
+**Station A visible at scroll 0.** Camera positioned correctly. Detail circle renders with "CAD_SPIN_RENDER.mp4" text placeholder, label box with "A / TRIGGER GUARD RADIUS" visible. IntersectionObserver fires on first appearance, stays revealed after.
+
+**Whip-pan mid-transit.** At scroll ~1000px, substrate at `translate3d(-4700, -2027) scale(1.59)`. DOF blur at ~9.4px. Drawing linework softens convincingly. Station A departed viewport, Station B not yet centered.
+
+**Station B never fully centers.** At scroll ~2000px (near end), substrate at `translate3d(-4800, -2000) scale(1.6)`. This is the whip-pan apex, not the Station B stop. The second GSAP `.to()` targets `getStationBStop()` but the scrub appears to plateau before reaching it. Station B circle rect at `top: -667, left: 4107` — only partially clipping into viewport. The camera stop values (`x: -6320+`, `y: -740+`, `rotateX: 35`) are never reached during normal scroll.
+
+**Only 2 of 9 planned stations rendered.** `drawingScenes` in `drawingPackageData.ts` defines 9 stops (A-J: hero, 5 projects, services, testimonials, contact). Only A and B are instantiated in `DrawingPackagePage.tsx`.
+
+**Background SVG resolution concern.** Native `naturalWidth: 800px` stretched to CSS `8800px`. Linework soft even at initial zoom. The new DXF-derived candidates (`Lower Receiver-Machined Forging (22).svg` etc.) should improve this once calibrated.
+
+**No scroll affordance.** `scrollbar-width: none` hides the scrollbar with no visual replacement. Users have no cue that the page scrolls.
+
+**No content below pinned scene.** The entire route is one GSAP ScrollTrigger pinned section. No hero section, no project details, no services/testimonials/contact — all defined in data but not rendered.
+
+### State Summary
+
+| Aspect | Status |
+|--------|--------|
+| Camera rig mechanics | Working — pinned scrub, whip-pan, DOF blur |
+| Station A framing | Good — visible at scroll 0, circle/label intact |
+| Station B framing | Camera stop not reached during scroll — circle barely clips viewport |
+| Content in circles | Placeholder text only ("CAD_SPIN_RENDER.mp4") |
+| Stations rendered | 2 of 9 planned |
+| Hero/Title Block | Not implemented |
+| Services/Testimonials/Contact | Not implemented |
+| SVG resolution | 800px native → soft at 8800px display |
+| Scroll affordance | None — no scrollbar, no indicator |
+
+---
+
 ## Next Tasks
 
-1. Add real video/image content inside the ProjectZone detail circles.
-2. Add Station C, then calibrate it with Playwright.
-3. Integrate Hero / Title Block as a spatial station.
-4. Hook the Drawing Package page into main portfolio navigation.
+1. Fix Station B scroll reach — camera stop values (`getStationBStop()`) not reached during normal scroll. Substrate plateaus at whip-pan apex instead of arriving at Station B. Investigate timeline end values or scroll duration.
+2. Add real video/image content inside the ProjectZone detail circles.
+3. Add Station C — identify a third drawing detail, place `<ProjectZone>`, calibrate with Playwright.
+4. Integrate Hero / Title Block as a spatial station.
+5. Hook the Drawing Package page into main portfolio navigation.
