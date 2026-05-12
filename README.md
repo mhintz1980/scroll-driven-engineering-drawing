@@ -1,4 +1,4 @@
-# Mark Hintz Portfolio — `scroll-driven-engineering-drawing`
+/btw use th imp# Mark Hintz Portfolio — `scroll-driven-engineering-drawing`
 
 **Design + Manufacturing Bridge**
 
@@ -29,6 +29,7 @@ docs/plans/2026-05-07-3d-perspective-floor-plane.md
 ```
 
 This is the **source of truth** for:
+
 - All `ProjectZone` station coordinates (`left`, `top` on substrate; `x`, `y`, `scale`, `rotateX` for GSAP)
 - CSS 3D geometry constraints (perspective depth, max safe substrate Y, rotateX limits)
 - The completion checklist (task-by-task with commit hashes)
@@ -50,16 +51,16 @@ Handoffs document: what was built, what bugs were found and how they were fixed,
 
 **Docs go stale fast.** Stale docs cause the next agent to re-do work, re-discover bugs, or break working geometry. Follow this protocol every session:
 
-| Trigger | Action |
-|---|---|
-| Start of session | Read `.continue-here.md`, the living context plan, and the most recent handoff |
-| After any GSAP coordinate change | Update the station map table in `2026-05-07-3d-perspective-floor-plane.md` |
-| After any architectural decision | Add it to the "Design Decisions Made" section of the active handoff |
-| After completing a task | Update the checklist in `2026-05-07-3d-perspective-floor-plane.md`, update `.continue-here.md` |
-| Mid-session (every ~45 min) | Update `.continue-here.md` with current state |
-| End of session | Write a new `docs/plans/YYYY-MM-DD-*-handoff.md` summarizing what was done and what comes next, update `.continue-here.md` to "complete" or hand off clearly |
+| Trigger                          | Action                                                                                                                                                       |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Start of session                 | Read `.continue-here.md`, the living context plan, and the most recent handoff                                                                               |
+| After any GSAP coordinate change | Update the station map table in `2026-05-07-3d-perspective-floor-plane.md`                                                                                   |
+| After any architectural decision | Add it to the "Design Decisions Made" section of the active handoff                                                                                          |
+| After completing a task          | Update the checklist in `2026-05-07-3d-perspective-floor-plane.md`, update `.continue-here.md`                                                               |
+| Mid-session (every ~45 min)      | Update `.continue-here.md` with current state                                                                                                                |
+| End of session                   | Write a new `docs/plans/YYYY-MM-DD-*-handoff.md` summarizing what was done and what comes next, update `.continue-here.md` to "complete" or hand off clearly |
 
-> **Rule of thumb:** If you changed something that the *next agent* would need to know to start without confusion, write it down before your session ends. Updating docs takes 5 minutes. Re-debugging a geometry bug takes an hour.
+> **Rule of thumb:** If you changed something that the _next agent_ would need to know to start without confusion, write it down before your session ends. Updating docs takes 5 minutes. Re-debugging a geometry bug takes an hour.
 
 ---
 
@@ -111,25 +112,26 @@ cd remotion && npm run studio
 
 ## 🛠 Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | React 19, TypeScript, Vite |
-| Animation | GSAP + ScrollTrigger |
-| 3D | CSS `perspective` / `preserve-3d` / `rotateX` (no Three.js on drawing page) |
-| Styling | Tailwind CSS v4 |
-| Calibration | Playwright (Node scripts for scroll-and-screenshot iteration) |
-| Video | Remotion |
+| Layer       | Technology                                                                  |
+| ----------- | --------------------------------------------------------------------------- |
+| Framework   | React 19, TypeScript, Vite                                                  |
+| Animation   | GSAP + ScrollTrigger                                                        |
+| 3D          | CSS `perspective` / `preserve-3d` / `rotateX` (no Three.js on drawing page) |
+| Styling     | Tailwind CSS v4                                                             |
+| Calibration | Playwright (Node scripts for scroll-and-screenshot iteration)               |
+| Video       | Remotion                                                                    |
 
 ---
 
 ## 🗺 Current Station Map (as of 2026-05-09)
 
-| Station | id | Title | Substrate pos | GSAP camera stop |
-|---|---|---|---|---|
-| A | `"A"` | TRIGGER GUARD RADIUS | `left: 1450px, top: 3200px` | `x=-1400, y=-3730, scale=1.2, rotateX=0` *(start)* |
-| B | `"B"` | BUFFER TUBE SOCKET | `left: 5567px, top: 833px` | `x=-6320 + 0.495*(vw - 975), y=-740 + 0.47*(vh - 550), scale=1.2, rotateX=35` *(viewport-aware tilt stop)* |
+| Station | id    | Title                | Substrate pos               | GSAP camera stop                                                                                           |
+| ------- | ----- | -------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| A       | `"A"` | TRIGGER GUARD RADIUS | `left: 1450px, top: 3200px` | `x=-1400, y=-3730, scale=1.2, rotateX=0` _(start)_                                                         |
+| B       | `"B"` | BUFFER TUBE SOCKET   | `left: 5567px, top: 833px`  | `x=-6320 + 0.495*(vw - 975), y=-740 + 0.47*(vh - 550), scale=1.2, rotateX=35` _(viewport-aware tilt stop)_ |
 
 **Key geometry constants:**
+
 - `perspective: 4000px` on container (never lower — content goes past focal plane)
 - `rotateX: 35°` at final stop (was 62° — caused invisible content bug)
 - Max safe substrate Y at `scale: 1.2`: `4000 / (sin(35°) × 1.2) ≈ 5806px`

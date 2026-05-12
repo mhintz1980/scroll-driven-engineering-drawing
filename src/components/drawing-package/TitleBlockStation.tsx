@@ -55,8 +55,8 @@ export function TitleBlockStation() {
       className="absolute pointer-events-none"
       style={{
         top: '5800px',
-        left: '6200px',
-        width: '2400px',
+        left: '6400px',
+        width: '1000px',
         transformStyle: 'preserve-3d',
       }}
       data-zone-id="T"
@@ -66,24 +66,23 @@ export function TitleBlockStation() {
       )}
 
       <div ref={tableRef}>
-        {/* Outer border */}
         <div
           className="border-2 bg-slate-950/95 backdrop-blur-sm"
           style={{ borderColor: 'var(--dp-accent)' }}
         >
-          {/* Header: drawing title */}
+          {/* Header */}
           <div
-            className="border-b-2 px-4 py-3 text-center"
+            className="border-b-2 px-6 py-4 text-center"
             style={{ borderColor: 'var(--dp-accent)' }}
           >
             <div
-              className="text-xl font-bold tracking-[0.12em] uppercase"
+              className="text-3xl font-bold tracking-[0.12em] uppercase"
               style={{ color: 'var(--dp-accent)' }}
             >
               {titleBlock.drawingTitle}
             </div>
             <div
-              className="text-[10px] tracking-[0.2em] mt-1"
+              className="text-base tracking-[0.2em] mt-1"
               style={{ color: 'var(--dp-text-dim)' }}
             >
               {titleBlock.sheetLabel}
@@ -92,17 +91,17 @@ export function TitleBlockStation() {
 
           {/* Revision table */}
           <div
-            className="border-b px-4 py-2"
+            className="border-b px-6 py-3"
             style={{ borderColor: 'var(--dp-border-dim)' }}
           >
             <div
-              className="text-[9px] uppercase tracking-[0.18em] mb-2 font-bold"
+              className="text-lg uppercase tracking-[0.18em] mb-2 font-bold"
               style={{ color: 'var(--dp-accent)' }}
             >
               REVISION HISTORY
             </div>
             <table
-              className="w-full text-[11px]"
+              className="w-full text-xl"
               style={{ color: 'var(--dp-text)' }}
             >
               <tbody>
@@ -113,7 +112,7 @@ export function TitleBlockStation() {
                     style={{ borderColor: 'var(--dp-border-dim)' }}
                   >
                     <td
-                      className="pr-3 py-1 font-bold w-12"
+                      className="pr-3 py-1.5 font-bold w-16"
                       style={{
                         color:
                           row.rev === 'C'
@@ -123,10 +122,10 @@ export function TitleBlockStation() {
                     >
                       {row.rev}
                     </td>
-                    <td className="pr-3 py-1 w-20 font-mono" style={{ color: 'var(--dp-text-dim)' }}>
+                    <td className="pr-3 py-1.5 w-24 font-mono" style={{ color: 'var(--dp-text-dim)' }}>
                       {row.date}
                     </td>
-                    <td className="py-1">{row.description}</td>
+                    <td className="py-1.5">{row.description}</td>
                   </tr>
                 ))}
               </tbody>
@@ -134,7 +133,7 @@ export function TitleBlockStation() {
           </div>
 
           {/* Field grid */}
-          <div className="grid grid-cols-4 gap-px px-4 py-3">
+          <div className="grid grid-cols-4 gap-1 px-6 py-4">
             {(
               [
                 ['DRAWN BY', titleBlock.drawnBy],
@@ -145,12 +144,12 @@ export function TitleBlockStation() {
             ).map(([label, value]) => (
               <div key={label}>
                 <div
-                  className="text-[8px] uppercase tracking-[0.18em] mb-0.5"
+                  className="text-sm uppercase tracking-[0.18em] mb-0.5"
                   style={{ color: 'var(--dp-text-dim)' }}
                 >
                   {label}
                 </div>
-                <div className="text-sm font-bold" style={{ color: 'var(--dp-text)' }}>
+                <div className="text-xl font-bold" style={{ color: 'var(--dp-text)' }}>
                   {value}
                 </div>
               </div>
@@ -159,39 +158,39 @@ export function TitleBlockStation() {
 
           {/* Contact row */}
           <div
-            className="border-t-2 grid grid-cols-3 gap-px px-4 py-3"
+            className="border-t-2 grid grid-cols-3 gap-1 px-6 py-4"
             style={{ borderColor: 'var(--dp-accent)' }}
           >
             <div>
               <div
-                className="text-[8px] uppercase tracking-[0.18em] mb-0.5"
+                className="text-sm uppercase tracking-[0.18em] mb-0.5"
                 style={{ color: 'var(--dp-text-dim)' }}
               >
                 CONTACT
               </div>
-              <div className="text-sm" style={{ color: 'var(--dp-text)' }}>
+              <div className="text-xl" style={{ color: 'var(--dp-text)' }}>
                 {portfolioData.personal.email}
               </div>
             </div>
             <div>
               <div
-                className="text-[8px] uppercase tracking-[0.18em] mb-0.5"
+                className="text-sm uppercase tracking-[0.18em] mb-0.5"
                 style={{ color: 'var(--dp-text-dim)' }}
               >
                 LOCATION
               </div>
-              <div className="text-sm" style={{ color: 'var(--dp-text)' }}>
+              <div className="text-xl" style={{ color: 'var(--dp-text)' }}>
                 {portfolioData.personal.location}
               </div>
             </div>
             <div>
               <div
-                className="text-[8px] uppercase tracking-[0.18em] mb-0.5"
+                className="text-sm uppercase tracking-[0.18em] mb-0.5"
                 style={{ color: 'var(--dp-text-dim)' }}
               >
                 STATUS
               </div>
-              <div className="text-sm font-bold" style={{ color: 'oklch(0.72 0.19 155)' }}>
+              <div className="text-xl font-bold" style={{ color: 'oklch(0.72 0.19 155)' }}>
                 AVAILABLE FOR WORK
               </div>
             </div>

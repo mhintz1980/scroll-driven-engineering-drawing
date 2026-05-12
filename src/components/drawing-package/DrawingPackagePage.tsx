@@ -81,25 +81,24 @@ const getStationDStop = () => ({
 const getHeroStop = () => {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-  const fitScale = Math.min(vw / SUBSTRATE_WIDTH, vh / SUBSTRATE_HEIGHT);
-  const scale = fitScale * 0.82;
   return {
-    x: (vw - SUBSTRATE_WIDTH * scale) / 2,
-    y: (vh - SUBSTRATE_HEIGHT * scale) / 2,
-    scale,
-    rotateX: 0,
+    x: vw / 2 - 2000 * 2.2,
+    y: vh / 2 - 2000 * 2.2,
+    scale: 2.2,
+    rotateX: 15,
   };
 };
 
 const getTitleBlockStop = () => {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-  const tbCenterX = 7400;
-  const tbCenterY = 6100;
+  const tbCenterX = 6900; // left: 6400 + width/2: 500
+  const tbCenterY = 6025; // top: 5800 + ~225 (half native height ~450)
+  const scale = Math.min(1.2, vw * 0.85 / 1000);
   return {
-    x: vw / 2 - tbCenterX * 1.2,
-    y: vh / 2 - tbCenterY * 1.2,
-    scale: 1.2,
+    x: vw / 2 - tbCenterX * scale,
+    y: vh / 2 - tbCenterY * scale,
+    scale,
     rotateX: 0,
   };
 };
@@ -145,7 +144,7 @@ export function DrawingPackagePage() {
           pin: true,
           start: 'top top',
           end: '+=7000',
-          scrub: 1.2,
+          scrub: 2.5,
           invalidateOnRefresh: true,
         },
       });
@@ -158,26 +157,38 @@ export function DrawingPackagePage() {
         rotateX: heroStop.rotateX,
       });
 
-      // Hero → Station A: fade text, zoom camera into first station
-      tl.to(heroRef.current, {
+      // Hero: Cinematic Intro Text on Substrate
+      gsap.set(heroTextRef.current, {
         opacity: 0,
+        scale: 0.9,
+        z: 200,
+        rotateX: -15, // Counteract initial camera tilt for face-on text
+      });
+
+      // Intro sequence: Hero text appears
+      tl.to(heroTextRef.current, {
+        opacity: 1,
+        scale: 1,
+        z: 400,
+        duration: 0.8,
+        ease: 'power3.out',
+      })
+      // Hold for a moment, then fade text and whip-pan to Station A
+      .to(heroTextRef.current, {
+        opacity: 0,
+        y: -100,
+        z: 800,
         duration: 0.6,
         ease: 'power2.in',
-      })
-      .to(heroTextRef.current, {
-        y: -30,
-        opacity: 0,
-        duration: 0.5,
-        ease: 'power2.in',
-      }, 0)
+      }, '+=0.4')
       .to(substrateRef.current, {
         x: () => getStationAStop().x,
         y: () => getStationAStop().y,
         scale: () => getStationAStop().scale,
         rotateX: () => getStationAStop().rotateX,
-        duration: 1.2,
-        ease: 'power3.inOut',
-      }, 0)
+        duration: 1.5,
+        ease: 'power4.inOut',
+      }, '<0.2')
 
       // Station A → whip-pan transit
       .to(substrateRef.current, {
@@ -265,9 +276,15 @@ export function DrawingPackagePage() {
         ease: 'none',
       })
       .to(substrateRef.current, {
-        x: () => window.innerWidth / 2 - 7000 * 1.1,
-        y: () => window.innerHeight / 2 - 5800 * 1.1,
-        scale: 1.1,
+        x: () => {
+          const s = Math.min(1.1, window.innerWidth * 0.8 / 1000);
+          return window.innerWidth / 2 - 6900 * s;
+        },
+        y: () => {
+          const s = Math.min(1.1, window.innerWidth * 0.8 / 1000);
+          return window.innerHeight / 2 - 5800 * s;
+        },
+        scale: () => Math.min(1.1, window.innerWidth * 0.8 / 1000),
         rotateX: 5,
         duration: 0.8,
         ease: 'power3.inOut',
@@ -364,91 +381,88 @@ export function DrawingPackagePage() {
           layout={STATION_D_LAYOUT}
           imageSrc={`${import.meta.env.BASE_URL}assets/images/rendering-06.webp`}
         />
-        {/* Title Block — final camera stop in lower-right corner */}
-        <TitleBlockStation />
-      </div>
-
-      {/* Hero overlay — zoomed-out drawing with animated text. Fades on scroll. */}
-      <div
-        ref={heroRef}
-        className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
-        style={{ zIndex: 60 }}
-      >
+        {/* Hero Text 3D Station */}
         <div
-          ref={heroTextRef}
-          className="text-center px-6 max-w-2xl"
+          ref={heroRef}
+          className="absolute"
+          style={{
+            left: '2000px',
+            top: '2000px',
+            transformStyle: 'preserve-3d',
+          }}
         >
           <div
-            className="text-[11px] uppercase tracking-[0.22em] mb-4"
-            style={{ color: 'var(--dp-accent)' }}
-          >
-            {portfolioData.personal.superHeader}
-          </div>
-          <h1
-            className="text-4xl sm:text-5xl md:text-7xl font-medium leading-none uppercase tracking-[0.03em] mb-6"
-            style={{ color: 'var(--dp-text)', fontFamily: "'Michroma', 'Archivo', system-ui, sans-serif" }}
-          >
-            {portfolioData.personal.name}
-          </h1>
-          <div
-            className="text-sm md:text-base uppercase leading-relaxed tracking-[0.02em] mb-8 inline-flex items-center gap-2"
-            style={{ color: 'var(--dp-text-dim, #94a3b8)' }}
-          >
-            <span>Built for</span>
-            <span
-              className="font-bold relative inline-flex h-[1.35em] min-w-[18ch] overflow-hidden align-baseline"
-              style={{ color: 'var(--dp-accent)' }}
-            >
-              <span className="invisible whitespace-nowrap pointer-events-none">
-                {WORD_CYCLE.reduce((a, b) => (a.length > b.length ? a : b), '')}
-              </span>
-              <span
-                key={WORD_CYCLE[currentWord]}
-                className="absolute bottom-0 left-0 whitespace-nowrap dp-word-cycle"
-              >
-                {WORD_CYCLE[currentWord]}
-              </span>
-            </span>
-          </div>
-          <div
-            className="text-xs leading-relaxed inline-flex flex-col items-start gap-1 px-5 py-4 border backdrop-blur-sm"
-            style={{
-              borderColor: 'var(--dp-border)',
-              background: 'rgba(9, 16, 25, 0.5)',
-              color: 'var(--dp-text)',
+            ref={heroTextRef}
+            className="flex flex-col items-center justify-center w-[1600px] -translate-x-1/2 -translate-y-1/2 pointer-events-none origin-center"
+            style={{ 
+              transformStyle: 'preserve-3d'
             }}
           >
-            {([
-              ['SPEC', portfolioData.personal.name],
-              ['ROLE', 'Mechanical Designer + Systems Builder'],
-              ['TOL', '±0.0005" | 15 YRS | JAX, FL'],
-              ['STATUS', 'AVAILABLE FOR WORK'],
-              ['STACK', 'SolidWorks · PDM · Python · AI Tooling'],
-            ] as const).map(([key, val]) => (
-              <div key={key} className="flex">
-                <span className="mr-2 font-bold" style={{ color: 'var(--dp-accent)' }}>
-                  &gt; {key}:
+            <div
+              className="text-[32px] uppercase tracking-[0.4em] mb-8 font-bold"
+              style={{ color: 'var(--dp-accent)' }}
+            >
+              {portfolioData.personal.superHeader}
+            </div>
+            
+            <div className="relative mb-12">
+              {/* Massive cinematic shadow behind text */}
+              <h1
+                className="text-[180px] font-bold leading-none uppercase tracking-[0.05em] absolute top-2 left-2 blur-2xl opacity-50"
+                style={{ color: 'var(--dp-accent)', fontFamily: "'Michroma', 'Archivo', system-ui, sans-serif" }}
+              >
+                {portfolioData.personal.name}
+              </h1>
+              
+              <h1
+                className="text-[180px] font-bold leading-none uppercase tracking-[0.05em] relative drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]"
+                style={{ color: 'var(--dp-text)', fontFamily: "'Michroma', 'Archivo', system-ui, sans-serif" }}
+              >
+                {portfolioData.personal.name}
+              </h1>
+            </div>
+
+            <div
+              className="text-[28px] uppercase tracking-[0.2em] mb-16 inline-flex items-center gap-6"
+              style={{ color: 'var(--dp-text-dim, #94a3b8)' }}
+            >
+              <span>Systems Designed For</span>
+              <span
+                className="font-bold relative inline-flex h-[1.35em] min-w-[12ch] overflow-hidden align-baseline"
+                style={{ color: 'var(--dp-accent)' }}
+              >
+                <span className="invisible whitespace-nowrap pointer-events-none">
+                  {WORD_CYCLE.reduce((a, b) => (a.length > b.length ? a : b), '')}
                 </span>
                 <span
-                  style={{
-                    color: key === 'STATUS' ? 'oklch(0.72 0.19 155)' : 'var(--dp-text)',
-                  }}
-                  className={key === 'STATUS' ? 'font-bold' : ''}
+                  key={WORD_CYCLE[currentWord]}
+                  className="absolute bottom-0 left-0 whitespace-nowrap dp-word-cycle"
                 >
-                  {val}
+                  {WORD_CYCLE[currentWord]}
                 </span>
-              </div>
-            ))}
+              </span>
+            </div>
+            
+            <div className="flex gap-16 border-t-4 border-b-4 py-8 px-16 backdrop-blur-md bg-slate-950/40" style={{ borderColor: 'var(--dp-accent)' }}>
+              {([
+                ['ROLE', 'Systems Builder'],
+                ['TOL', '±0.0005" | 15 YRS'],
+                ['STATUS', 'AVAILABLE'],
+              ] as const).map(([key, val]) => (
+                <div key={key} className="flex flex-col gap-2">
+                  <span className="text-xl font-bold tracking-widest" style={{ color: 'var(--dp-accent)' }}>
+                    {key}
+                  </span>
+                  <span className="text-2xl font-mono text-white tracking-wider">
+                    {val}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-
-        {/* Scroll hint */}
-        <div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-[0.3em] animate-pulse"
-          style={{ color: 'var(--dp-text-dim, #64748b)' }}
-        >
-          Scroll to explore
-        </div>
+        {/* Title Block — final camera stop in lower-right corner */}
+        <TitleBlockStation />
       </div>
     </div>
   );
