@@ -62,3 +62,27 @@
     scroll-snap-align: none;
   }
 }
+
+/* Hero word cycle animation */
+@keyframes dp-word-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  85% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-80%);
+  }
+}
+
+.dp-word-cycle {
+  animation: dp-word-slide-in 2.5s ease-in-out forwards;
+}

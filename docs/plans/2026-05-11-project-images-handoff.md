@@ -44,15 +44,20 @@ Changes in `src/components/drawing-package/ProjectZone.tsx`:
 |---------|---------|-------|--------|
 | A | Industrial Torque Wrench | `torque-wrench-03.webp` | Active |
 | B | Armament Components | `Billet Receiver Set AR15.webp` | Active |
-| C | Industrial Dewatering Pump | `pump-package-04.webp` | Pending placement |
-| D | Renderings & Visualizations | `rendering-06.webp` | Pending placement |
+| C | Industrial Dewatering Pump | `pump-package-04.webp` | Active (calibrated 2026-05-11) |
+| D | Renderings & Visualizations | `rendering-06.webp` | Active (calibrated 2026-05-11) |
+| T | Title Block (no image) | N/A | Active (built 2026-05-12) |
+| Hero | Zoomed-out substrate + text overlay | N/A | Active (built 2026-05-12) |
 
 ---
 
 ## Files Updated
 
 - `src/components/drawing-package/ProjectZone.tsx` — `imageSrc` prop + image rendering
-- `src/components/drawing-package/DrawingPackagePage.tsx` — image paths passed to Stations A and B
+- `src/components/drawing-package/DrawingPackagePage.tsx` — image paths, hero overlay, title block stop, extended GSAP timeline (`+=7000`)
+- `src/components/drawing-package/TitleBlockStation.tsx` — new component (ANSI title block with revision table, contact info)
+- `src/styles/drawing-package.css` — `dp-word-slide-in` keyframe animation for hero word cycle
+- `src/data/portfolioData.ts` — "Drawing" nav link added to navigation array
 
 ---
 
@@ -65,8 +70,19 @@ Changes in `src/components/drawing-package/ProjectZone.tsx`:
 
 ## Next Tasks
 
-1. Add Station C (Industrial Dewatering Pump) — place `<ProjectZone>` on substrate, assign `pump-package-04.webp`, calibrate camera stop with `?calibrate=1` + Playwright.
-2. Add Station D (Renderings) — place `<ProjectZone>` on substrate, assign `rendering-06.webp`, calibrate camera stop.
-3. Extend GSAP timeline to include Stations C and D camera stops (currently only A → whip → B).
-4. Integrate Hero / Title Block as a spatial station.
-5. Hook Drawing Package page into main portfolio navigation.
+1. ~~Add Station C (Industrial Dewatering Pump)~~ — Done 2026-05-11. Calibrated at all 3 viewports.
+2. ~~Add Station D (Renderings)~~ — Done 2026-05-11. Calibrated at all 3 viewports.
+3. ~~Extend GSAP timeline to include Stations C and D camera stops~~ — Done 2026-05-11.
+4. ~~Integrate Hero / Title Block as spatial stations~~ — Done 2026-05-12.
+   - Hero overlay: zoomed-out substrate + animated word cycle + spec block, fades on scroll into Station A
+   - Title Block (Station T): ANSI-style table with revision history, contact info, status. Final camera stop after Station D
+   - GSAP timeline extended: `end: '+=7000'`, added Hero→A transition + D→Title Block transit
+5. ~~Hook Drawing Package page into main portfolio navigation~~ — Done 2026-05-12. "Drawing" link added to navbar via `portfolioData.navigation`.
+
+### Remaining
+
+1. Title Block camera calibration across viewports (975x550, 1440x900, 390x844)
+2. Hero overlay mobile testing and visual polish
+3. Multi-viewport full journey verification (Hero→A→B→C→D→T)
+4. Clean up orphaned components (DrawingHero.tsx, TitleBlockHeader.tsx, TitleBlockFooter.tsx)
+5. Performance audit for long scroll (`+=7000` scrub)

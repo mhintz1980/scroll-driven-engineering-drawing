@@ -22,6 +22,7 @@ export const portfolioData = {
     { label: "Projects", href: "/#projects" },
     { label: "Services", href: "/#services" },
     { label: "Case Studies", href: "/#case-studies" },
+    { label: "Drawing", href: "/drawing-package" },
     { label: "Contact", href: "/#contact" }
   ],
 
