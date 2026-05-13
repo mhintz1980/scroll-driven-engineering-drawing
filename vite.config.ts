@@ -10,6 +10,6 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
-    allowedHosts: 'all',
+    allowedHosts: true,
   },
 })
