@@ -79,18 +79,31 @@ const getStationDStop = () => ({
   rotateX: 0,
 });
 
-// Hero stop: compute scale so the 1600px-wide hero text block
-// fits within 85% of viewport width (capped at 1.3).
+// Hero stop: perspective tilt showing blueprint from an angle.
+// Scale is intentionally smaller than before — more drawing visible around the text.
 const getHeroStop = () => {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-  // hero text div is ~1600px wide × ~560px tall at native scale
-  const scale = Math.min(vw * 0.85 / 1600, vh * 0.68 / 560, 1.3);
+  const scale = Math.min(vw * 0.40 / 1600, vh * 0.38 / 560, 0.52);
   return {
     x: vw / 2 - 2000 * scale,
-    y: vh / 2 - 2000 * scale,
+    y: vh / 2 - 1920 * scale, // slightly above centre to balance tilt
     scale,
-    rotateX: 0,
+    rotateX: 20,              // perspective — blueprint recedes toward top
+  };
+};
+
+// Opening wide shot: entire 8800×6800 substrate fits in the viewport.
+// Camera starts here, then flies into the hero area.
+const getWideStop = () => {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const scale = Math.max(0.10, Math.min(vw * 0.88 / 8800, vh * 0.88 / 6800));
+  return {
+    x: vw / 2 - 4400 * scale,
+    y: vh / 2 - 3400 * scale,
+    scale,
+    rotateX: 0, // flat top-down before tilt kicks in
   };
 };
 
@@ -155,85 +168,116 @@ export function DrawingPackagePage() {
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
       const heroStop = getHeroStop();
+      const wideStop = getWideStop();
 
-      // ── Initial state ──────────────────────────────────────────
-      gsap.set(substrateRef.current, {
-        x: heroStop.x,
-        y: heroStop.y,
-        scale: heroStop.scale,
-        rotateX: heroStop.rotateX,
-      });
+      // ── Initial state: full blueprint overview (wide shot) ──────────
+      gsap.set(substrateRef.current, { ...wideStop });
       gsap.set(bgLayerRef.current, { filter: 'invert(1) blur(0px)' });
-      gsap.set(heroTextRef.current, { opacity: 0, y: 28 });
+      // Hero text hidden; rotateX counter-tilts the substrate's 20° so text stays face-on
+      gsap.set(heroTextRef.current, { opacity: 0, rotateX: -heroStop.rotateX });
 
-      // Auto-play hero text on load — no scroll needed
-      gsap.to(heroTextRef.current, {
-        opacity: 1,
-        y: 0,
-        duration: 0.95,
-        delay: 0.35,
-        ease: 'power3.out',
-      });
+      // Grab hero text children for sequential reveal
+      const superHeaderEl = heroTextRef.current?.querySelector('[data-hero="header"]');
+      const nameWrapEl    = heroTextRef.current?.querySelector('[data-hero="name"]');
+      const subtitleEl    = heroTextRef.current?.querySelector('[data-hero="subtitle"]');
+      const specEl        = heroTextRef.current?.querySelector('[data-hero="spec"]');
 
-      // ── flyTo helper ────────────────────────────────────────────
-      // Fires a self-paced whip-pan at a fixed duration.
-      // Kills any in-progress tween before starting (no overlap).
+      // Set each child's initial hidden state
+      if (superHeaderEl) gsap.set(superHeaderEl, { opacity: 0, x: -40 });
+      if (nameWrapEl)    gsap.set(nameWrapEl,    { clipPath: 'inset(0 100% 0 0)' });
+      if (subtitleEl)    gsap.set(subtitleEl,    { opacity: 0, x: -20 });
+      if (specEl)        gsap.set(specEl,        { opacity: 0, y: 18 });
+
+      // ── Cinematic opening sequence ───────────────────────────────────
+      // Wide → fly into hero position (camera tilts into perspective)
+      // → hero text unrolls section by section
+      const introTl = gsap.timeline({ delay: 0.25 });
+      introTl
+        .to(substrateRef.current, {
+          x: heroStop.x, y: heroStop.y,
+          scale: heroStop.scale, rotateX: heroStop.rotateX,
+          duration: 1.35, ease: 'power3.inOut',
+        })
+        // Reveal the container (children are still individually hidden)
+        .set(heroTextRef.current, { opacity: 1 })
+        // Super header slides in from left
+        .to(superHeaderEl, { opacity: 1, x: 0, duration: 0.42, ease: 'power2.out' })
+        // Name unrolls left → right (the main cinematic beat)
+        .to(nameWrapEl, { clipPath: 'inset(0 0% 0 0)', duration: 0.9, ease: 'power3.inOut' }, '<0.1')
+        // Subtitle fades in mid-unroll
+        .to(subtitleEl, { opacity: 1, x: 0, duration: 0.48, ease: 'power2.out' }, '<0.52')
+        // Spec block slides up last
+        .to(specEl, { opacity: 1, y: 0, duration: 0.44, ease: 'power2.out' }, '<0.32');
+
+      // ── flyTo helper ──────────────────────────────────────────────────
       type Stop = { x: number; y: number; scale: number; rotateX: number };
       const flyTo = (stop: Stop, opts: { blur?: boolean; duration?: number } = {}) => {
         const { blur = true, duration = 1.45 } = opts;
         gsap.killTweensOf([substrateRef.current, bgLayerRef.current]);
-
         if (blur) {
-          // Blur immediately as the whip-pan begins
-          gsap.to(bgLayerRef.current, {
-            filter: 'invert(1) blur(11px)',
-            duration: 0.22,
-            ease: 'none',
-          });
-          // Camera launches 80ms later — blur is already building
+          gsap.to(bgLayerRef.current, { filter: 'invert(1) blur(11px)', duration: 0.22, ease: 'none' });
           gsap.to(substrateRef.current, {
-            x: stop.x,
-            y: stop.y,
-            scale: stop.scale,
-            rotateX: stop.rotateX,
-            duration,
-            ease: 'power4.inOut',
-            delay: 0.08,
+            x: stop.x, y: stop.y, scale: stop.scale, rotateX: stop.rotateX,
+            duration, ease: 'power4.inOut', delay: 0.08,
           });
-          // Focus pull: sharpen as camera arrives (~last 35% of travel)
           gsap.to(bgLayerRef.current, {
-            filter: 'invert(1) blur(0px)',
-            duration: 0.38,
-            ease: 'power1.out',
+            filter: 'invert(1) blur(0px)', duration: 0.38, ease: 'power1.out',
             delay: 0.08 + duration * 0.62,
           });
         } else {
           gsap.to(substrateRef.current, {
-            x: stop.x,
-            y: stop.y,
-            scale: stop.scale,
-            rotateX: stop.rotateX,
-            duration,
-            ease: 'power3.inOut',
+            x: stop.x, y: stop.y, scale: stop.scale, rotateX: stop.rotateX,
+            duration, ease: 'power3.inOut',
           });
         }
       };
 
-      // ── Station stop functions in order ──────────────────────────
+      // ── Station A: rollercoaster sequence ────────────────────────────
+      // 1. Flatten camera (aims straight down — rotateX → 0)
+      // 2. Blur fires as the whip-pan launches
+      // 3. Hard power4.out whip to PAST Station A (overshoot ~7%)
+      // 4. Blur clears on arrival
+      // 5. Camera settles BACK with rotateX:10 tilt — "looking back at the station"
+      const flyToStationARollercoaster = () => {
+        const stationA = getStationAStop();
+        gsap.killTweensOf([substrateRef.current, bgLayerRef.current, heroTextRef.current]);
+
+        gsap.timeline()
+          // Hero text exits upward
+          .to(heroTextRef.current, { opacity: 0, y: -45, duration: 0.38, ease: 'power2.in' })
+          // Camera flattens — aimed straight down
+          .to(substrateRef.current, { rotateX: 0, duration: 0.42, ease: 'power2.in' }, '<0.08')
+          // Blur builds for launch
+          .to(bgLayerRef.current, { filter: 'invert(1) blur(14px)', duration: 0.28, ease: 'power1.in' }, '-=0.08')
+          // HARD WHIP — overshoots Station A by 7% in x/y, 7% overscale
+          .to(substrateRef.current, {
+            x: stationA.x - 88,
+            y: stationA.y - 58,
+            scale: stationA.scale * 1.07,
+            rotateX: 0,
+            duration: 1.12,
+            ease: 'power4.out',
+          }, '-=0.12')
+          // Focus pull — blur clears as camera arrives
+          .to(bgLayerRef.current, { filter: 'invert(1) blur(0px)', duration: 0.35, ease: 'power1.out' }, '-=0.34')
+          // SETTLE BACK — pulls to exact station, tilts backward ("looking back down the track")
+          .to(substrateRef.current, {
+            x: stationA.x,
+            y: stationA.y,
+            scale: stationA.scale,
+            rotateX: 10,
+            duration: 0.52,
+            ease: 'power2.inOut',
+          }, '+=0.04');
+      };
+
+      // ── Station zones and scroll progress tracking ──────────────────
       const STOPS: Array<() => Stop> = [
-        getStationAStop,
-        getStationBStop,
-        getStationCStop,
-        getStationDStop,
-        getTitleBlockStop,
+        getStationAStop, getStationBStop, getStationCStop, getStationDStop, getTitleBlockStop,
       ];
       const TRIGGERS_PX = [TRIGGER_A, TRIGGER_B, TRIGGER_C, TRIGGER_D, TRIGGER_T];
       let prevStation = -1;
 
-      // ── Single pin + onUpdate — resolves cross-trigger timing issues ──
-      // onUpdate fires on every scroll tick; station only changes when
-      // the progress px crosses a threshold. flyTo is self-paced and
-      // always plays at 1.45 s regardless of scroll speed.
       ScrollTrigger.create({
         trigger: containerRef.current,
         pin: true,
@@ -242,32 +286,28 @@ export function DrawingPackagePage() {
         invalidateOnRefresh: true,
         onUpdate: (self) => {
           const px = self.progress * 7000;
-
-          // Determine target station (-1 = hero zone)
           let targetStation = -1;
           for (let i = TRIGGERS_PX.length - 1; i >= 0; i--) {
             if (px >= TRIGGERS_PX[i]) { targetStation = i; break; }
           }
-
           if (targetStation === prevStation) return;
-
           const goingForward = targetStation > prevStation;
           prevStation = targetStation;
 
           if (targetStation === -1) {
-            // Returned to hero zone
-            flyTo(heroStop, { blur: false, duration: 1.05 });
+            // Return to hero zone — restore perspective tilt + show text
+            gsap.killTweensOf([substrateRef.current, bgLayerRef.current]);
+            flyTo(heroStop, { blur: false, duration: 1.1 });
             gsap.to(heroTextRef.current, {
-              opacity: 1, y: 0, duration: 0.7, delay: 0.38, ease: 'power3.out',
+              opacity: 1, y: 0, duration: 0.68, delay: 0.45, ease: 'power3.out',
             });
             setActiveStation(-1);
+          } else if (targetStation === 0 && goingForward) {
+            // Station A — the rollercoaster moment
+            flyToStationARollercoaster();
+            setActiveStation(0);
           } else {
-            // Entering a station
-            if (goingForward && targetStation === 0) {
-              // First departure — fade out hero text
-              gsap.killTweensOf(heroTextRef.current);
-              gsap.to(heroTextRef.current, { opacity: 0, y: -45, duration: 0.42, ease: 'power2.in' });
-            }
+            // All other station transitions
             flyTo(STOPS[targetStation](), {
               blur: goingForward,
               duration: goingForward ? 1.45 : 1.05,
@@ -278,7 +318,6 @@ export function DrawingPackagePage() {
       });
 
     }, containerRef);
-
     return () => ctx.revert();
   }, []);
 
@@ -451,13 +490,14 @@ export function DrawingPackagePage() {
             }}
           >
             <div
+              data-hero="header"
               className="text-[32px] uppercase tracking-[0.4em] mb-8 font-bold"
               style={{ color: 'var(--dp-accent)' }}
             >
               {portfolioData.personal.superHeader}
             </div>
             
-            <div className="relative mb-12">
+            <div data-hero="name" className="relative mb-12">
               {/* Massive cinematic shadow behind text */}
               <h1
                 className="text-[180px] font-bold leading-none uppercase tracking-[0.05em] absolute top-2 left-2 blur-2xl opacity-50"
@@ -475,6 +515,7 @@ export function DrawingPackagePage() {
             </div>
 
             <div
+              data-hero="subtitle"
               className="text-[28px] uppercase tracking-[0.2em] mb-16 inline-flex items-center gap-6"
               style={{ color: 'var(--dp-text-dim, #94a3b8)' }}
             >
@@ -495,7 +536,7 @@ export function DrawingPackagePage() {
               </span>
             </div>
             
-            <div className="flex gap-16 border-t-4 border-b-4 py-8 px-16 backdrop-blur-md bg-slate-950/40" style={{ borderColor: 'var(--dp-accent)' }}>
+            <div data-hero="spec" className="flex gap-16 border-t-4 border-b-4 py-8 px-16 backdrop-blur-md bg-slate-950/40" style={{ borderColor: 'var(--dp-accent)' }}>
               {([
                 ['ROLE', 'Systems Builder'],
                 ['TOL', '±0.0005" | 15 YRS'],
