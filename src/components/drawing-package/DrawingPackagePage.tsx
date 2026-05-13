@@ -8,6 +8,13 @@ import '../../styles/drawing-package.css';
 
 gsap.registerPlugin(ScrollTrigger);
 
+// Dev-only debug hook — exposes GSAP for manual timeline inspection in
+// headless test environments where rAF is throttled. Removed on prod builds
+// by tree-shaking (no consumer outside dev).
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  (window as unknown as { __gsap?: typeof gsap }).__gsap = gsap;
+}
+
 const SUBSTRATE_WIDTH = 8800;
 const SUBSTRATE_HEIGHT = 6800;
 const SUBSTRATE_ASSET = 'Lower Receiver-Machined Forging (22).svg';
@@ -166,6 +173,9 @@ export function DrawingPackagePage() {
   }, []);
 
   useLayoutEffect(() => {
+    // Force scroll to top so ScrollTrigger initialization starts from progress=0
+    window.scrollTo(0, 0);
+
     const ctx = gsap.context(() => {
       const heroStop = getHeroStop();
       const wideStop = getWideStop();
@@ -232,49 +242,75 @@ export function DrawingPackagePage() {
         }
       };
 
-      // ── Station A: rollercoaster sequence ────────────────────────────
-      // 1. Flatten camera (aims straight down — rotateX → 0)
-      // 2. Blur fires as the whip-pan launches
-      // 3. Hard power4.out whip to PAST Station A (overshoot ~7%)
-      // 4. Blur clears on arrival
-      // 5. Camera settles BACK with rotateX:10 tilt — "looking back at the station"
-      const flyToStationARollercoaster = () => {
-        const stationA = getStationAStop();
+      // ── Rollercoaster fly-to ─────────────────────────────────────────
+      // Cinematic "track" motion for moving between stations.
+      // 1. Camera flattens (rotateX → 0) — aimed straight down the track
+      // 2. Blur builds as the whip-pan launches
+      // 3. HARD power4.out whip OVERSHOOTS the target by ~7%
+      // 4. Blur clears as the camera arrives
+      // 5. SETTLES back to exact target with the station's calibrated tilt
+      const flyToStationRollercoaster = (
+        stop: Stop,
+        opts: { whipDuration?: number; settleDuration?: number; overshoot?: number } = {},
+      ) => {
+        const { whipDuration = 1.12, settleDuration = 0.52, overshoot = 0.07 } = opts;
         gsap.killTweensOf([substrateRef.current, bgLayerRef.current, heroTextRef.current]);
 
-        gsap.timeline()
-          // Hero text exits upward
-          .to(heroTextRef.current, { opacity: 0, y: -45, duration: 0.38, ease: 'power2.in' })
-          // Camera flattens — aimed straight down
-          .to(substrateRef.current, { rotateX: 0, duration: 0.42, ease: 'power2.in' }, '<0.08')
+        // Position math (absolute timeline positions in seconds):
+        const FLATTEN_AT = 0;
+        const BLUR_BUILD_AT = 0.18;
+        const WHIP_AT = 0.30;
+        const WHIP_END_AT = WHIP_AT + whipDuration;
+        const BLUR_CLEAR_AT = WHIP_END_AT - 0.34;  // start blur clear during last 0.34s of whip
+        const SETTLE_AT = WHIP_END_AT + 0.04;
+
+        return gsap.timeline()
+          // Camera flattens — aimed straight down the track
+          .to(substrateRef.current, { rotateX: 0, duration: 0.42, ease: 'power2.in' }, FLATTEN_AT)
           // Blur builds for launch
-          .to(bgLayerRef.current, { filter: 'invert(1) blur(14px)', duration: 0.28, ease: 'power1.in' }, '-=0.08')
-          // HARD WHIP — overshoots Station A by 7% in x/y, 7% overscale
+          .to(bgLayerRef.current, { filter: 'invert(1) blur(14px)', duration: 0.28, ease: 'power1.in' }, BLUR_BUILD_AT)
+          // HARD WHIP — overshoots target in x/y and scale (further in the direction of travel)
           .to(substrateRef.current, {
-            x: stationA.x - 88,
-            y: stationA.y - 58,
-            scale: stationA.scale * 1.07,
+            x: stop.x + Math.sign(stop.x || -1) * 88,
+            y: stop.y + Math.sign(stop.y || -1) * 58,
+            scale: stop.scale * (1 + overshoot),
             rotateX: 0,
-            duration: 1.12,
+            duration: whipDuration,
             ease: 'power4.out',
-          }, '-=0.12')
+          }, WHIP_AT)
           // Focus pull — blur clears as camera arrives
-          .to(bgLayerRef.current, { filter: 'invert(1) blur(0px)', duration: 0.35, ease: 'power1.out' }, '-=0.34')
-          // SETTLE BACK — pulls to exact station, tilts backward ("looking back down the track")
+          .to(bgLayerRef.current, { filter: 'invert(1) blur(0px)', duration: 0.35, ease: 'power1.out' }, BLUR_CLEAR_AT)
+          // SETTLE — pulls to exact stop with the station's calibrated tilt
           .to(substrateRef.current, {
-            x: stationA.x,
-            y: stationA.y,
-            scale: stationA.scale,
-            rotateX: 10,
-            duration: 0.52,
+            x: stop.x,
+            y: stop.y,
+            scale: stop.scale,
+            rotateX: stop.rotateX,
+            duration: settleDuration,
             ease: 'power2.inOut',
-          }, '+=0.04');
+          }, SETTLE_AT);
+      };
+
+      // ── Station A: rollercoaster sequence with hero exit ─────────────
+      const flyToStationARollercoaster = () => {
+        const stationA = getStationAStop();
+        // Override stationA.rotateX to settle at a slight tilt ("looking back at the station")
+        const stationAWithTilt: Stop = { ...stationA, rotateX: 10 };
+        gsap.killTweensOf([substrateRef.current, bgLayerRef.current, heroTextRef.current]);
+
+        // Hero text exits upward; substrate rollercoasters into Station A
+        gsap.to(heroTextRef.current, { opacity: 0, y: -45, duration: 0.38, ease: 'power2.in' });
+        flyToStationRollercoaster(stationAWithTilt, { whipDuration: 1.12, settleDuration: 0.52 });
       };
 
       // ── Station zones and scroll progress tracking ──────────────────
       const STOPS: Array<() => Stop> = [
         getStationAStop, getStationBStop, getStationCStop, getStationDStop, getTitleBlockStop,
       ];
+      // Settle tilts — the rotateX each station lands on AFTER the overshoot.
+      // Each gives a slightly different "perspective shift back" character.
+      // A=10° (looking back at trigger guard), B=35° (calibrated steep), C=8°, D=12°, T=0° (flat finale)
+      const SETTLE_TILTS = [10, 35, 8, 12, 0];
       const TRIGGERS_PX = [TRIGGER_A, TRIGGER_B, TRIGGER_C, TRIGGER_D, TRIGGER_T];
       let prevStation = -1;
 
@@ -303,15 +339,23 @@ export function DrawingPackagePage() {
             });
             setActiveStation(-1);
           } else if (targetStation === 0 && goingForward) {
-            // Station A — the rollercoaster moment
+            // Station A — rollercoaster + hero exit
             flyToStationARollercoaster();
             setActiveStation(0);
-          } else {
-            // All other station transitions
-            flyTo(STOPS[targetStation](), {
-              blur: goingForward,
-              duration: goingForward ? 1.45 : 1.05,
+          } else if (goingForward) {
+            // Stations B/C/D/T — rollercoaster overshoot + settle with the station's settle tilt
+            // Later stations get slightly tighter timing for momentum continuity
+            const tightening = Math.min(targetStation * 0.04, 0.16);
+            const baseStop = STOPS[targetStation]();
+            const stopWithSettleTilt: Stop = { ...baseStop, rotateX: SETTLE_TILTS[targetStation] };
+            flyToStationRollercoaster(stopWithSettleTilt, {
+              whipDuration: 1.12 - tightening,
+              settleDuration: 0.52,
             });
+            setActiveStation(targetStation);
+          } else {
+            // Scrolling backwards — softer, faster reverse without overshoot
+            flyTo(STOPS[targetStation](), { blur: false, duration: 1.05 });
             setActiveStation(targetStation);
           }
         },
