@@ -48,6 +48,7 @@ const STATION_D_LAYOUT = {
   },
 } as const;
 
+// Station stops — all unchanged from prior calibration
 const getStationAStop = () => ({
   x: window.innerWidth < 768
     ? -1400 + 0.55 * (window.innerWidth - 975)
@@ -78,22 +79,26 @@ const getStationDStop = () => ({
   rotateX: 0,
 });
 
+// Hero stop: compute scale so the 1600px-wide hero text block
+// fits within 85% of viewport width (capped at 1.3).
 const getHeroStop = () => {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
+  // hero text div is ~1600px wide × ~560px tall at native scale
+  const scale = Math.min(vw * 0.85 / 1600, vh * 0.68 / 560, 1.3);
   return {
-    x: vw / 2 - 2000 * 2.2,
-    y: vh / 2 - 2000 * 2.2,
-    scale: 2.2,
-    rotateX: 15,
+    x: vw / 2 - 2000 * scale,
+    y: vh / 2 - 2000 * scale,
+    scale,
+    rotateX: 0,
   };
 };
 
 const getTitleBlockStop = () => {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-  const tbCenterX = 6900; // left: 6400 + width/2: 500
-  const tbCenterY = 6025; // top: 5800 + ~225 (half native height ~450)
+  const tbCenterX = 6900;
+  const tbCenterY = 6025;
   const scale = Math.min(1.2, vw * 0.85 / 1000);
   return {
     x: vw / 2 - tbCenterX * scale,
@@ -103,7 +108,23 @@ const getTitleBlockStop = () => {
   };
 };
 
+// Ordered station definitions for the progress indicator
+const STATION_DEFS = [
+  { id: 'A', label: 'TRIGGER GUARD' },
+  { id: 'B', label: 'BUFFER TUBE' },
+  { id: 'C', label: 'PUMP PACKAGE' },
+  { id: 'D', label: 'RENDERINGS' },
+  { id: 'T', label: 'TITLE BLOCK' },
+] as const;
+
 const WORD_CYCLE = wordCycleData;
+
+// Scroll trigger points (pixels past pin start)
+const TRIGGER_A   = 600;
+const TRIGGER_B   = 1800;
+const TRIGGER_C   = 3200;
+const TRIGGER_D   = 4600;
+const TRIGGER_T   = 6200;
 
 export function DrawingPackagePage() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -112,6 +133,8 @@ export function DrawingPackagePage() {
   const heroRef = useRef<HTMLDivElement>(null);
   const heroTextRef = useRef<HTMLDivElement>(null);
   const [currentWord, setCurrentWord] = useState(0);
+  // -1 = hero, 0-4 = stations A-T
+  const [activeStation, setActiveStation] = useState<number>(-1);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -123,7 +146,6 @@ export function DrawingPackagePage() {
   useEffect(() => {
     document.documentElement.classList.add('drawing-package-route');
     document.body.classList.add('drawing-package-route');
-
     return () => {
       document.documentElement.classList.remove('drawing-package-route');
       document.body.classList.remove('drawing-package-route');
@@ -134,187 +156,218 @@ export function DrawingPackagePage() {
     const ctx = gsap.context(() => {
       const heroStop = getHeroStop();
 
-      gsap.set(bgLayerRef.current, {
-        filter: 'invert(1) blur(0px)',
-      });
-
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: containerRef.current,
-          pin: true,
-          start: 'top top',
-          end: '+=7000',
-          scrub: 2.5,
-          invalidateOnRefresh: true,
-        },
-      });
-
-      // Hero: start zoomed out, showing full substrate
+      // ── Initial state ──────────────────────────────────────────
       gsap.set(substrateRef.current, {
         x: heroStop.x,
         y: heroStop.y,
         scale: heroStop.scale,
         rotateX: heroStop.rotateX,
       });
+      gsap.set(bgLayerRef.current, { filter: 'invert(1) blur(0px)' });
+      gsap.set(heroTextRef.current, { opacity: 0, y: 28 });
 
-      // Hero: Cinematic Intro Text on Substrate
-      gsap.set(heroTextRef.current, {
-        opacity: 0,
-        scale: 0.9,
-        z: 200,
-        rotateX: -15, // Counteract initial camera tilt for face-on text
-      });
-
-      // Intro sequence: Hero text appears
-      tl.to(heroTextRef.current, {
+      // Auto-play hero text on load — no scroll needed
+      gsap.to(heroTextRef.current, {
         opacity: 1,
-        scale: 1,
-        z: 400,
-        duration: 0.8,
+        y: 0,
+        duration: 0.95,
+        delay: 0.35,
         ease: 'power3.out',
-      })
-      // Hold for a moment, then fade text and whip-pan to Station A
-      .to(heroTextRef.current, {
-        opacity: 0,
-        y: -100,
-        z: 800,
-        duration: 0.6,
-        ease: 'power2.in',
-      }, '+=0.4')
-      .to(substrateRef.current, {
-        x: () => getStationAStop().x,
-        y: () => getStationAStop().y,
-        scale: () => getStationAStop().scale,
-        rotateX: () => getStationAStop().rotateX,
-        duration: 1.5,
-        ease: 'power4.inOut',
-      }, '<0.2')
-
-      // Station A → whip-pan transit
-      .to(substrateRef.current, {
-        x: -4800,
-        y: -2000,
-        scale: 1.6,
-        rotateX: 0,
-        duration: 1,
-        ease: 'power3.inOut',
-      })
-      .to(bgLayerRef.current, {
-        filter: 'invert(1) blur(10px)',
-        duration: 0.65,
-        ease: 'none',
-      }, '<0.18')
-      // Task 3/6: Second stop — decelerates and tilts into 35-deg floor-plane view.
-      .to(substrateRef.current, {
-        x: () => getStationBStop().x,
-        y: () => getStationBStop().y,
-        scale: () => getStationBStop().scale,
-        rotateX: () => getStationBStop().rotateX,
-        duration: 1,
-        ease: 'power3.inOut',
-      })
-      // Transit B → C: flatten out, sweep left and down
-      .to(bgLayerRef.current, {
-        filter: 'invert(1) blur(8px)',
-        duration: 0.4,
-        ease: 'none',
-      })
-      .to(substrateRef.current, {
-        x: -5000,
-        y: -3800,
-        scale: 1.4,
-        rotateX: 10,
-        duration: 0.8,
-        ease: 'power3.inOut',
-      })
-      // Third stop — Station C, flat view of lower-left quadrant
-      .to(bgLayerRef.current, {
-        filter: 'invert(1) blur(0px)',
-        duration: 0.3,
-        ease: 'none',
-      })
-      .to(substrateRef.current, {
-        x: () => getStationCStop().x,
-        y: () => getStationCStop().y,
-        scale: () => getStationCStop().scale,
-        rotateX: () => getStationCStop().rotateX,
-        duration: 0.7,
-        ease: 'power3.inOut',
-      })
-      // Transit C → D: sweep right across bottom of drawing
-      .to(bgLayerRef.current, {
-        filter: 'invert(1) blur(8px)',
-        duration: 0.4,
-        ease: 'none',
-      })
-      .to(substrateRef.current, {
-        x: -6800,
-        y: -3600,
-        scale: 1.5,
-        rotateX: 5,
-        duration: 0.8,
-        ease: 'power3.inOut',
-      })
-      // Fourth stop — Station D, flat view of lower-right quadrant
-      .to(bgLayerRef.current, {
-        filter: 'invert(1) blur(0px)',
-        duration: 0.3,
-        ease: 'none',
-      })
-      .to(substrateRef.current, {
-        x: () => getStationDStop().x,
-        y: () => getStationDStop().y,
-        scale: () => getStationDStop().scale,
-        rotateX: () => getStationDStop().rotateX,
-        duration: 0.7,
-        ease: 'power3.inOut',
-      })
-      // Transit D → Title Block: sweep down-right to lower corner
-      .to(bgLayerRef.current, {
-        filter: 'invert(1) blur(6px)',
-        duration: 0.4,
-        ease: 'none',
-      })
-      .to(substrateRef.current, {
-        x: () => {
-          const s = Math.min(1.1, window.innerWidth * 0.8 / 1000);
-          return window.innerWidth / 2 - 6900 * s;
-        },
-        y: () => {
-          const s = Math.min(1.1, window.innerWidth * 0.8 / 1000);
-          return window.innerHeight / 2 - 5800 * s;
-        },
-        scale: () => Math.min(1.1, window.innerWidth * 0.8 / 1000),
-        rotateX: 5,
-        duration: 0.8,
-        ease: 'power3.inOut',
-      })
-      // Final stop — Title Block, flat view
-      .to(bgLayerRef.current, {
-        filter: 'invert(1) blur(0px)',
-        duration: 0.3,
-        ease: 'none',
-      })
-      .to(substrateRef.current, {
-        x: () => getTitleBlockStop().x,
-        y: () => getTitleBlockStop().y,
-        scale: () => getTitleBlockStop().scale,
-        rotateX: () => getTitleBlockStop().rotateX,
-        duration: 0.7,
-        ease: 'power3.inOut',
       });
+
+      // ── flyTo helper ────────────────────────────────────────────
+      // Fires a self-paced whip-pan at a fixed duration.
+      // Kills any in-progress tween before starting (no overlap).
+      type Stop = { x: number; y: number; scale: number; rotateX: number };
+      const flyTo = (stop: Stop, opts: { blur?: boolean; duration?: number } = {}) => {
+        const { blur = true, duration = 1.45 } = opts;
+        gsap.killTweensOf([substrateRef.current, bgLayerRef.current]);
+
+        if (blur) {
+          // Blur immediately as the whip-pan begins
+          gsap.to(bgLayerRef.current, {
+            filter: 'invert(1) blur(11px)',
+            duration: 0.22,
+            ease: 'none',
+          });
+          // Camera launches 80ms later — blur is already building
+          gsap.to(substrateRef.current, {
+            x: stop.x,
+            y: stop.y,
+            scale: stop.scale,
+            rotateX: stop.rotateX,
+            duration,
+            ease: 'power4.inOut',
+            delay: 0.08,
+          });
+          // Focus pull: sharpen as camera arrives (~last 35% of travel)
+          gsap.to(bgLayerRef.current, {
+            filter: 'invert(1) blur(0px)',
+            duration: 0.38,
+            ease: 'power1.out',
+            delay: 0.08 + duration * 0.62,
+          });
+        } else {
+          gsap.to(substrateRef.current, {
+            x: stop.x,
+            y: stop.y,
+            scale: stop.scale,
+            rotateX: stop.rotateX,
+            duration,
+            ease: 'power3.inOut',
+          });
+        }
+      };
+
+      // ── Station stop functions in order ──────────────────────────
+      const STOPS: Array<() => Stop> = [
+        getStationAStop,
+        getStationBStop,
+        getStationCStop,
+        getStationDStop,
+        getTitleBlockStop,
+      ];
+      const TRIGGERS_PX = [TRIGGER_A, TRIGGER_B, TRIGGER_C, TRIGGER_D, TRIGGER_T];
+      let prevStation = -1;
+
+      // ── Single pin + onUpdate — resolves cross-trigger timing issues ──
+      // onUpdate fires on every scroll tick; station only changes when
+      // the progress px crosses a threshold. flyTo is self-paced and
+      // always plays at 1.45 s regardless of scroll speed.
+      ScrollTrigger.create({
+        trigger: containerRef.current,
+        pin: true,
+        start: 'top top',
+        end: '+=7000',
+        invalidateOnRefresh: true,
+        onUpdate: (self) => {
+          const px = self.progress * 7000;
+
+          // Determine target station (-1 = hero zone)
+          let targetStation = -1;
+          for (let i = TRIGGERS_PX.length - 1; i >= 0; i--) {
+            if (px >= TRIGGERS_PX[i]) { targetStation = i; break; }
+          }
+
+          if (targetStation === prevStation) return;
+
+          const goingForward = targetStation > prevStation;
+          prevStation = targetStation;
+
+          if (targetStation === -1) {
+            // Returned to hero zone
+            flyTo(heroStop, { blur: false, duration: 1.05 });
+            gsap.to(heroTextRef.current, {
+              opacity: 1, y: 0, duration: 0.7, delay: 0.38, ease: 'power3.out',
+            });
+            setActiveStation(-1);
+          } else {
+            // Entering a station
+            if (goingForward && targetStation === 0) {
+              // First departure — fade out hero text
+              gsap.killTweensOf(heroTextRef.current);
+              gsap.to(heroTextRef.current, { opacity: 0, y: -45, duration: 0.42, ease: 'power2.in' });
+            }
+            flyTo(STOPS[targetStation](), {
+              blur: goingForward,
+              duration: goingForward ? 1.45 : 1.05,
+            });
+            setActiveStation(targetStation);
+          }
+        },
+      });
+
     }, containerRef);
 
     return () => ctx.revert();
   }, []);
 
   return (
-    // Task 2: perspective on the outer container establishes the 3D stage
     <div
       ref={containerRef}
       className="drawing-package drawing-scene w-screen h-screen overflow-hidden bg-slate-950"
       style={{ perspective: '4000px', perspectiveOrigin: '50% 40%' }}
     >
+      {/* Station progress indicator — right edge, engineering-callout style */}
+      <div
+        className="fixed right-6 top-1/2 -translate-y-1/2 z-[70] flex flex-col gap-3 pointer-events-none"
+        aria-label="Section navigator"
+        data-testid="station-progress-indicator"
+      >
+        {STATION_DEFS.map((s, i) => {
+          const isActive = activeStation === i;
+          const isVisited = activeStation > i;
+          return (
+            <div
+              key={s.id}
+              className="flex items-center gap-2 group"
+              data-testid={`station-dot-${s.id}`}
+            >
+              {/* Label — slides in when active */}
+              <span
+                className="font-mono text-[10px] tracking-[0.18em] uppercase transition-all duration-300"
+                style={{
+                  color: isActive ? 'var(--dp-accent)' : 'transparent',
+                  opacity: isActive ? 1 : 0,
+                  transform: isActive ? 'translateX(0)' : 'translateX(6px)',
+                  transitionProperty: 'color, opacity, transform',
+                }}
+              >
+                {s.label}
+              </span>
+              {/* Tick mark */}
+              <div
+                className="flex items-center gap-1.5"
+                style={{ transition: 'opacity 0.3s ease' }}
+              >
+                {/* Short horizontal rule — like a drawing callout tick */}
+                <div
+                  className="h-px transition-all duration-300"
+                  style={{
+                    width: isActive ? '16px' : '8px',
+                    backgroundColor: isActive
+                      ? 'var(--dp-accent)'
+                      : isVisited
+                        ? 'oklch(0.70 0.21 255 / 0.45)'
+                        : 'oklch(0.50 0.01 245 / 0.5)',
+                  }}
+                />
+                {/* Station ID box */}
+                <div
+                  className="font-mono text-[10px] font-bold tracking-wider transition-all duration-300"
+                  style={{
+                    width: '20px',
+                    height: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: `1px solid ${isActive ? 'var(--dp-accent)' : isVisited ? 'oklch(0.70 0.21 255 / 0.4)' : 'oklch(0.50 0.01 245 / 0.35)'}`,
+                    color: isActive ? 'var(--dp-accent)' : isVisited ? 'oklch(0.70 0.21 255 / 0.55)' : 'oklch(0.55 0.01 245 / 0.6)',
+                    backgroundColor: isActive ? 'oklch(0.70 0.21 255 / 0.12)' : 'transparent',
+                    boxShadow: isActive ? '0 0 8px oklch(0.70 0.21 255 / 0.25)' : 'none',
+                  }}
+                >
+                  {s.id}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Scroll hint — shown in hero zone, fades when first station fires */}
+      <div
+        className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[70] flex flex-col items-center gap-2 pointer-events-none transition-opacity duration-500"
+        style={{ opacity: activeStation === -1 ? 1 : 0 }}
+        data-testid="scroll-hint"
+      >
+        <span className="font-mono text-[10px] tracking-[0.28em] uppercase" style={{ color: 'var(--dp-text-dim)' }}>
+          SCROLL TO ADVANCE
+        </span>
+        <div className="w-px h-8 overflow-hidden" style={{ backgroundColor: 'oklch(0.50 0.01 245 / 0.3)' }}>
+          <div className="w-full h-4 animate-[dp-scroll-cue_1.8s_ease-in-out_infinite]" style={{ backgroundColor: 'var(--dp-accent)' }} />
+        </div>
+      </div>
       {/* Task 2: preserve-3d so children share the same 3D coordinate space */}
       <div
         ref={substrateRef}
@@ -348,11 +401,9 @@ export function DrawingPackagePage() {
           left="1450px"
           layout={STATION_A_LAYOUT}
           imageSrc={`${import.meta.env.BASE_URL}assets/images/torque-wrench-03.webp`}
+          active={activeStation === 0}
         />
-        {/* Station B — Buffer Tube Socket / Pistol Grip Mount
-            Substrate coords: left=5567px, top=833px
-            Camera stop is viewport-corrected from a 975x550 calibration baseline:
-            x=-6320 + 0.495*(vw-975), y=-740 + 0.47*(vh-550), scale=1.2, rotateX=35. */}
+        {/* Station B — Buffer Tube Socket / Pistol Grip Mount */}
         <ProjectZone
           id="B"
           title="BUFFER TUBE SOCKET"
@@ -360,9 +411,9 @@ export function DrawingPackagePage() {
           left="5567px"
           layout={STATION_B_LAYOUT}
           imageSrc={`${import.meta.env.BASE_URL}assets/images/Billet Receiver Set AR15.webp`}
+          active={activeStation === 1}
         />
-        {/* Station C — Industrial Dewatering Pump
-            Substrate coords: left=3500px, top=4200px */}
+        {/* Station C — Industrial Dewatering Pump */}
         <ProjectZone
           id="C"
           title="INDUSTRIAL DEWATERING PUMP"
@@ -370,9 +421,9 @@ export function DrawingPackagePage() {
           left="3500px"
           layout={STATION_C_LAYOUT}
           imageSrc={`${import.meta.env.BASE_URL}assets/images/pump-package-04.webp`}
+          active={activeStation === 2}
         />
-        {/* Station D — Renderings & Visualizations
-            Substrate coords: left=6800px, top=4000px */}
+        {/* Station D — Renderings & Visualizations */}
         <ProjectZone
           id="D"
           title="RENDERINGS"
@@ -380,6 +431,7 @@ export function DrawingPackagePage() {
           left="6800px"
           layout={STATION_D_LAYOUT}
           imageSrc={`${import.meta.env.BASE_URL}assets/images/rendering-06.webp`}
+          active={activeStation === 3}
         />
         {/* Hero Text 3D Station */}
         <div
