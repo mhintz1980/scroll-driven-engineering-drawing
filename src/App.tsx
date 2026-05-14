@@ -8,7 +8,7 @@ import { DrawingPackagePage } from './components/drawing-package/DrawingPackageP
 
 function App() {
   return (
-    <Router basename="/Mark_Hintz-Portfolio-v2/">
+    <Router basename={import.meta.env.BASE_URL}>
       <Routes>
         {/* Drawing Package variation — standalone, no shared shell */}
         <Route path="/drawing-package" element={<DrawingPackagePage />} />

@@ -18,9 +18,11 @@ export interface ProjectZoneProps {
   left: string;
   layout: ProjectZoneLayout;
   imageSrc?: string;
+  /** Set to true when the camera arrives at this station to trigger the intro animation */
+  active?: boolean;
 }
 
-export function ProjectZone({ id, title, top, left, layout, imageSrc }: ProjectZoneProps) {
+export function ProjectZone({ id, title, top, left, layout, imageSrc, active }: ProjectZoneProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const dotRef = useRef<SVGCircleElement>(null);
   const dotInnerRef = useRef<SVGCircleElement>(null);
@@ -30,6 +32,8 @@ export function ProjectZone({ id, title, top, left, layout, imageSrc }: ProjectZ
   const lineRef = useRef<HTMLDivElement>(null);
   
   const hasTriggered = useRef(false);
+  // Stable ref to the intro function so it can be called from multiple effects
+  const playIntroRef = useRef<(() => void) | null>(null);
   const calibrationMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('calibrate');
 
   const [lineMath, setLineMath] = useState({ L: 0, aZ: 0, aY: 0 });
@@ -101,7 +105,6 @@ export function ProjectZone({ id, title, top, left, layout, imageSrc }: ProjectZ
       resetZone();
 
       const tl = gsap.timeline();
-
       // 1. Anchor dot appears on the blueprint
       tl.to([dotRef.current, dotInnerRef.current], {
         scale: 1,
@@ -155,6 +158,9 @@ export function ProjectZone({ id, title, top, left, layout, imageSrc }: ProjectZ
       );
     };
 
+    // Store the intro function in a ref so the active-prop watcher can call it
+    playIntroRef.current = playZoneIntro;
+
     if (calibrationMode) {
       if (dotRef.current && dotInnerRef.current && circleRef.current && labelRef.current && textRef.current && lineRef.current) {
         gsap.set([dotRef.current, dotInnerRef.current], { scale: 1, opacity: 1, transformOrigin: 'center' });
@@ -182,6 +188,15 @@ export function ProjectZone({ id, title, top, left, layout, imageSrc }: ProjectZ
     observer.observe(container);
     return () => observer.disconnect();
   }, [layout, calibrationMode]);
+
+  // When the camera arrives at this station (active=true), trigger the intro once.
+  // This bypasses IntersectionObserver, which doesn't detect CSS-transformed positions.
+  useEffect(() => {
+    if (active && !hasTriggered.current && playIntroRef.current) {
+      hasTriggered.current = true;
+      playIntroRef.current();
+    }
+  }, [active]);
 
   return (
     <div
