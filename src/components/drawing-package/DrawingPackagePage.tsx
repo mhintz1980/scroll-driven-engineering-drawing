@@ -1,161 +1,103 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ProjectZone } from './ProjectZone';
 import { TitleBlockStation } from './TitleBlockStation';
 import { wordCycleData, portfolioData } from '../../data/portfolioData';
 import '../../styles/drawing-package.css';
 
-gsap.registerPlugin(ScrollTrigger);
-
-// Dev-only debug hook — exposes GSAP for manual timeline inspection in
-// headless test environments where rAF is throttled. Removed on prod builds
-// by tree-shaking (no consumer outside dev).
+// Dev-only debug hook — exposes GSAP for headless-test introspection.
+// Tree-shaken in production builds.
 if (import.meta.env.DEV && typeof window !== 'undefined') {
   (window as unknown as { __gsap?: typeof gsap }).__gsap = gsap;
 }
 
-const SUBSTRATE_WIDTH = 8800;
-const SUBSTRATE_HEIGHT = 6800;
+// ── Substrate dimensions ─────────────────────────────────────────────
+// Single source of truth. When the new SVG is dropped, only these two
+// numbers (and SUBSTRATE_ASSET) change.
+const SUBSTRATE_W = 8800;
+const SUBSTRATE_H = 6800;
 const SUBSTRATE_ASSET = 'Lower Receiver-Machined Forging (22).svg';
+// Whether the SVG needs runtime invert (white-on-dark). Set to false
+// once the SVG is pre-inverted in Inkscape.
+const SUBSTRATE_NEEDS_INVERT = true;
 
-const STATION_A_LAYOUT = {
-  pathD: 'M 52 388 L 144 388 L 144 260 L 56 218',
-  anchor: { x: 52, y: 388 },
-  circleStyle: {
-    top: '68px',
-    left: '32px',
-  },
-} as const;
-
-const STATION_B_LAYOUT = {
-  pathD: 'M 64 404 L 176 404 L 176 254 L 28 198',
-  anchor: { x: 64, y: 404 },
-  circleStyle: {
-    top: '56px',
-    left: '12px',
-  },
-} as const;
-
-const STATION_C_LAYOUT = {
-  pathD: 'M 540 410 L 440 410 L 440 260 L 548 210',
-  anchor: { x: 540, y: 410 },
-  circleStyle: {
-    top: '60px',
-    left: '360px',
-  },
-} as const;
-
-const STATION_D_LAYOUT = {
-  pathD: 'M 460 390 L 560 390 L 560 240 L 452 190',
-  anchor: { x: 460, y: 390 },
-  circleStyle: {
-    top: '48px',
-    left: '340px',
-  },
-} as const;
-
-// Station stops — all unchanged from prior calibration
-const getStationAStop = () => ({
-  x: window.innerWidth < 768
-    ? -1400 + 0.55 * (window.innerWidth - 975)
-    : -1400,
-  y: -3730 - Math.max(0, 720 - window.innerHeight) * 0.35,
-  scale: 1.2,
-  rotateX: 0,
-});
-
-const getStationBStop = () => ({
-  x: -6320 + 0.495 * (window.innerWidth - 975),
-  y: -740 + 0.47 * (window.innerHeight - 550),
-  scale: 1.2,
-  rotateX: 35,
-});
-
-const getStationCStop = () => ({
-  x: -3920 + 0.5 * (window.innerWidth - 975),
-  y: -4980 - Math.max(0, 720 - window.innerHeight) * 0.3,
-  scale: 1.2,
-  rotateX: 0,
-});
-
-const getStationDStop = () => ({
-  x: -7880 + 0.48 * (window.innerWidth - 975),
-  y: -4740 - Math.max(0, 720 - window.innerHeight) * 0.3,
-  scale: 1.2,
-  rotateX: 0,
-});
-
-// Hero stop: perspective tilt showing blueprint from an angle.
-// Scale is intentionally smaller than before — more drawing visible around the text.
-const getHeroStop = () => {
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const scale = Math.min(vw * 0.40 / 1600, vh * 0.38 / 560, 0.52);
-  return {
-    x: vw / 2 - 2000 * scale,
-    y: vh / 2 - 1920 * scale, // slightly above centre to balance tilt
-    scale,
-    rotateX: 20,              // perspective — blueprint recedes toward top
-  };
+// ── Camera targets ───────────────────────────────────────────────────
+// Each target = a point on the substrate (in substrate-pixel coords) to
+// CENTER under the viewport, plus a zoom and a settle tilt. No more
+// magic-number drift across viewports — one math function handles all.
+type Target = {
+  id: string;
+  label: string;
+  cx: number;                          // substrate-x of camera target
+  cy: number;                          // substrate-y of camera target
+  scale: number | 'wide' | 'hero';     // zoom factor (numeric) or special
+  rotateX: number;                     // perspective tilt in degrees
 };
 
-// Opening wide shot: entire 8800×6800 substrate fits in the viewport.
-// Camera starts here, then flies into the hero area.
-const getWideStop = () => {
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const scale = Math.max(0.10, Math.min(vw * 0.88 / 8800, vh * 0.88 / 6800));
-  return {
-    x: vw / 2 - 4400 * scale,
-    y: vh / 2 - 3400 * scale,
-    scale,
-    rotateX: 0, // flat top-down before tilt kicks in
-  };
+// Wide opening: fits the entire substrate within the viewport.
+const WIDE: Target = {
+  id: 'wide', label: 'WIDE',
+  cx: SUBSTRATE_W / 2, cy: SUBSTRATE_H / 2,
+  scale: 'wide', rotateX: 0,
 };
 
-const getTitleBlockStop = () => {
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const tbCenterX = 6900;
-  const tbCenterY = 6025;
-  const scale = Math.min(1.2, vw * 0.85 / 1000);
-  return {
-    x: vw / 2 - tbCenterX * scale,
-    y: vh / 2 - tbCenterY * scale,
-    scale,
-    rotateX: 0,
-  };
+// Hero: cinematic perspective on the central drawing area.
+const HERO: Target = {
+  id: 'hero', label: 'HERO',
+  cx: 2000, cy: 1920,
+  scale: 'hero', rotateX: 20,
 };
 
-// Ordered station definitions for the progress indicator
-const STATION_DEFS = [
-  { id: 'A', label: 'TRIGGER GUARD' },
-  { id: 'B', label: 'BUFFER TUBE' },
-  { id: 'C', label: 'PUMP PACKAGE' },
-  { id: 'D', label: 'RENDERINGS' },
-  { id: 'T', label: 'TITLE BLOCK' },
-] as const;
+// Project stations — listed in viewing order.
+// (cx, cy) was reverse-engineered from the previous hand-tuned stops:
+//   prev stop {x, y, scale} at baseline viewport (vw=975, vh=550) →
+//   cx = (vw/2 - x) / scale, cy = (vh/2 - y) / scale
+// This preserves the previous calibration EXACTLY at the baseline, but
+// scales correctly to any viewport (no more -3920 + 0.5*(vw-975) drift).
+const STATIONS: Target[] = [
+  { id: 'A', label: 'TRIGGER GUARD', cx: 1573, cy: 3338, scale: 1.2, rotateX: 10 },
+  { id: 'B', label: 'BUFFER TUBE',   cx: 5673, cy:  846, scale: 1.2, rotateX: 35 },
+  { id: 'C', label: 'PUMP PACKAGE',  cx: 3673, cy: 4379, scale: 1.2, rotateX:  8 },
+  { id: 'D', label: 'RENDERINGS',    cx: 6973, cy: 4179, scale: 1.2, rotateX: 12 },
+  { id: 'T', label: 'TITLE BLOCK',   cx: 6900, cy: 6025, scale: 1.2, rotateX:  0 },
+];
+
+// ── Camera math ──────────────────────────────────────────────────────
+type Stop = { x: number; y: number; scale: number; rotateX: number };
+
+function computeScale(t: Target, vw: number, vh: number): number {
+  if (t.scale === 'wide') {
+    return Math.max(0.10, Math.min(vw * 0.88 / SUBSTRATE_W, vh * 0.88 / SUBSTRATE_H));
+  }
+  if (t.scale === 'hero') {
+    return Math.min(vw * 0.40 / 1600, vh * 0.38 / 560, 0.52);
+  }
+  return t.scale;
+}
+
+function computeStop(t: Target, vw: number, vh: number): Stop {
+  const scale = computeScale(t, vw, vh);
+  return {
+    x: vw / 2 - t.cx * scale,
+    y: vh / 2 - t.cy * scale,
+    scale,
+    rotateX: t.rotateX,
+  };
+}
 
 const WORD_CYCLE = wordCycleData;
 
-// Scroll trigger points (pixels past pin start)
-const TRIGGER_A   = 600;
-const TRIGGER_B   = 1800;
-const TRIGGER_C   = 3200;
-const TRIGGER_D   = 4600;
-const TRIGGER_T   = 6200;
-
 export function DrawingPackagePage() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const substrateRef = useRef<HTMLDivElement>(null);
-  const bgLayerRef = useRef<HTMLImageElement>(null);
-  const heroRef = useRef<HTMLDivElement>(null);
-  const heroTextRef = useRef<HTMLDivElement>(null);
+  const containerRef  = useRef<HTMLDivElement>(null);
+  const substrateRef  = useRef<HTMLDivElement>(null);
+  const bgLayerRef    = useRef<HTMLImageElement>(null);
+  const heroRef       = useRef<HTMLDivElement>(null);
+  const heroTextRef   = useRef<HTMLDivElement>(null);
   const [currentWord, setCurrentWord] = useState(0);
-  // -1 = hero, 0-4 = stations A-T
+  // -1 = hero, 0..STATIONS.length-1 = each station
   const [activeStation, setActiveStation] = useState<number>(-1);
 
+  // ── Hero word cycle (independent of GSAP) ──────────────────────────
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentWord((prev) => (prev + 1) % WORD_CYCLE.length);
@@ -163,6 +105,7 @@ export function DrawingPackagePage() {
     return () => clearInterval(interval);
   }, []);
 
+  // ── Body class lifecycle ───────────────────────────────────────────
   useEffect(() => {
     document.documentElement.classList.add('drawing-package-route');
     document.body.classList.add('drawing-package-route');
@@ -172,212 +115,300 @@ export function DrawingPackagePage() {
     };
   }, []);
 
+  // ── Main cinematic state machine ───────────────────────────────────
   useLayoutEffect(() => {
-    // Force scroll to top so ScrollTrigger initialization starts from progress=0
-    window.scrollTo(0, 0);
+    // currentIdx & isTransitioning live in the closure (not React state)
+    // because they must be read synchronously from event handlers.
+    let currentIdx = -1;
+    let isTransitioning = true;          // intro starts immediately
+    let bufferedDir: 1 | -1 | null = null;
+
+    const setStation = (idx: number) => {
+      currentIdx = idx;
+      setActiveStation(idx);
+    };
 
     const ctx = gsap.context(() => {
-      const heroStop = getHeroStop();
-      const wideStop = getWideStop();
+      // ─── Initial state ────────────────────────────────────────────
+      const vw0 = window.innerWidth;
+      const vh0 = window.innerHeight;
+      gsap.set(substrateRef.current, computeStop(WIDE, vw0, vh0));
+      if (SUBSTRATE_NEEDS_INVERT) {
+        gsap.set(bgLayerRef.current, { filter: 'invert(1) blur(0px)' });
+      } else {
+        gsap.set(bgLayerRef.current, { filter: 'blur(0px)' });
+      }
 
-      // ── Initial state: full blueprint overview (wide shot) ──────────
-      gsap.set(substrateRef.current, { ...wideStop });
-      gsap.set(bgLayerRef.current, { filter: 'invert(1) blur(0px)' });
-      // Hero text hidden; rotateX counter-tilts the substrate's 20° so text stays face-on
-      gsap.set(heroTextRef.current, { opacity: 0, rotateX: -heroStop.rotateX });
+      const heroStop0 = computeStop(HERO, vw0, vh0);
+      // Hero text counter-tilts the substrate's perspective so it stays face-on
+      gsap.set(heroTextRef.current, { opacity: 0, rotateX: -heroStop0.rotateX });
 
-      // Grab hero text children for sequential reveal
+      // Hero text children start hidden — sequential reveal during intro
       const superHeaderEl = heroTextRef.current?.querySelector('[data-hero="header"]');
       const nameWrapEl    = heroTextRef.current?.querySelector('[data-hero="name"]');
       const subtitleEl    = heroTextRef.current?.querySelector('[data-hero="subtitle"]');
       const specEl        = heroTextRef.current?.querySelector('[data-hero="spec"]');
-
-      // Set each child's initial hidden state
       if (superHeaderEl) gsap.set(superHeaderEl, { opacity: 0, x: -40 });
       if (nameWrapEl)    gsap.set(nameWrapEl,    { clipPath: 'inset(0 100% 0 0)' });
       if (subtitleEl)    gsap.set(subtitleEl,    { opacity: 0, x: -20 });
       if (specEl)        gsap.set(specEl,        { opacity: 0, y: 18 });
 
-      // ── Cinematic opening sequence ───────────────────────────────────
-      // Wide → fly into hero position (camera tilts into perspective)
-      // → hero text unrolls section by section
+      // ─── Helper: blur the substrate (focus pull) ──────────────────
+      const blurFilter = (px: number) =>
+        SUBSTRATE_NEEDS_INVERT ? `invert(1) blur(${px}px)` : `blur(${px}px)`;
+
+      // ─── Intro: wide → hero, then unroll hero text ────────────────
       const introTl = gsap.timeline({ delay: 0.25 });
       introTl
         .to(substrateRef.current, {
-          x: heroStop.x, y: heroStop.y,
-          scale: heroStop.scale, rotateX: heroStop.rotateX,
+          ...heroStop0,
           duration: 1.35, ease: 'power3.inOut',
         })
-        // Reveal the container (children are still individually hidden)
         .set(heroTextRef.current, { opacity: 1 })
-        // Super header slides in from left
         .to(superHeaderEl, { opacity: 1, x: 0, duration: 0.42, ease: 'power2.out' })
-        // Name unrolls left → right (the main cinematic beat)
-        .to(nameWrapEl, { clipPath: 'inset(0 0% 0 0)', duration: 0.9, ease: 'power3.inOut' }, '<0.1')
-        // Subtitle fades in mid-unroll
-        .to(subtitleEl, { opacity: 1, x: 0, duration: 0.48, ease: 'power2.out' }, '<0.52')
-        // Spec block slides up last
-        .to(specEl, { opacity: 1, y: 0, duration: 0.44, ease: 'power2.out' }, '<0.32');
+        .to(nameWrapEl,    { clipPath: 'inset(0 0% 0 0)', duration: 0.9, ease: 'power3.inOut' }, '<0.1')
+        .to(subtitleEl,    { opacity: 1, x: 0, duration: 0.48, ease: 'power2.out' }, '<0.52')
+        .to(specEl,        { opacity: 1, y: 0, duration: 0.44, ease: 'power2.out' }, '<0.32');
 
-      // ── flyTo helper ──────────────────────────────────────────────────
-      type Stop = { x: number; y: number; scale: number; rotateX: number };
-      const flyTo = (stop: Stop, opts: { blur?: boolean; duration?: number } = {}) => {
-        const { blur = true, duration = 1.45 } = opts;
-        gsap.killTweensOf([substrateRef.current, bgLayerRef.current]);
-        if (blur) {
-          gsap.to(bgLayerRef.current, { filter: 'invert(1) blur(11px)', duration: 0.22, ease: 'none' });
-          gsap.to(substrateRef.current, {
-            x: stop.x, y: stop.y, scale: stop.scale, rotateX: stop.rotateX,
-            duration, ease: 'power4.inOut', delay: 0.08,
-          });
-          gsap.to(bgLayerRef.current, {
-            filter: 'invert(1) blur(0px)', duration: 0.38, ease: 'power1.out',
-            delay: 0.08 + duration * 0.62,
-          });
-        } else {
-          gsap.to(substrateRef.current, {
-            x: stop.x, y: stop.y, scale: stop.scale, rotateX: stop.rotateX,
-            duration, ease: 'power3.inOut',
-          });
-        }
-      };
-
-      // ── Rollercoaster fly-to ─────────────────────────────────────────
-      // Cinematic "track" motion for moving between stations.
-      // 1. Camera flattens (rotateX → 0) — aimed straight down the track
-      // 2. Blur builds as the whip-pan launches
-      // 3. HARD power4.out whip OVERSHOOTS the target by ~7%
+      // ─── flyTo helpers ────────────────────────────────────────────
+      // Rollercoaster: cinematic forward whip with overshoot + settle.
+      // 1. Camera flattens (rotateX → 0) — "aimed straight down the track"
+      // 2. Blur builds as the whip launches
+      // 3. HARD power4.out whip OVERSHOOTS the target
       // 4. Blur clears as the camera arrives
       // 5. SETTLES back to exact target with the station's calibrated tilt
-      const flyToStationRollercoaster = (
-        stop: Stop,
-        opts: { whipDuration?: number; settleDuration?: number; overshoot?: number } = {},
-      ) => {
-        const { whipDuration = 1.12, settleDuration = 0.52, overshoot = 0.07 } = opts;
-        gsap.killTweensOf([substrateRef.current, bgLayerRef.current, heroTextRef.current]);
+      const flyToRollercoaster = (target: Target, opts: {
+        whipDuration?: number;
+        settleDuration?: number;
+        overshootScale?: number;
+        overshootPx?: number;
+      } = {}) => {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const stop = computeStop(target, vw, vh);
+        const {
+          whipDuration = 1.05,
+          settleDuration = 0.5,
+          overshootScale = 0.07,
+          overshootPx = 90,
+        } = opts;
 
-        // Position math (absolute timeline positions in seconds):
-        const FLATTEN_AT = 0;
-        const BLUR_BUILD_AT = 0.18;
-        const WHIP_AT = 0.30;
-        const WHIP_END_AT = WHIP_AT + whipDuration;
-        const BLUR_CLEAR_AT = WHIP_END_AT - 0.34;  // start blur clear during last 0.34s of whip
-        const SETTLE_AT = WHIP_END_AT + 0.04;
+        // Direction of travel: substrate moves opposite to the camera
+        // motion. We pull the substrate slightly PAST the final stop in
+        // the same direction the camera is moving.
+        const currentSubX = parseFloat(gsap.getProperty(substrateRef.current, 'x') as string) || 0;
+        const currentSubY = parseFloat(gsap.getProperty(substrateRef.current, 'y') as string) || 0;
+        const dx = stop.x - currentSubX;
+        const dy = stop.y - currentSubY;
+        const dirX = Math.sign(dx) || -1;
+        const dirY = Math.sign(dy) || -1;
+
+        const FLATTEN_AT  = 0;
+        const BLUR_AT     = 0.18;
+        const WHIP_AT     = 0.30;
+        const WHIP_END    = WHIP_AT + whipDuration;
+        const BLUR_CLR    = WHIP_END - 0.34;
+        const SETTLE_AT   = WHIP_END + 0.04;
 
         return gsap.timeline()
-          // Camera flattens — aimed straight down the track
           .to(substrateRef.current, { rotateX: 0, duration: 0.42, ease: 'power2.in' }, FLATTEN_AT)
-          // Blur builds for launch
-          .to(bgLayerRef.current, { filter: 'invert(1) blur(14px)', duration: 0.28, ease: 'power1.in' }, BLUR_BUILD_AT)
-          // HARD WHIP — overshoots target in x/y and scale (further in the direction of travel)
+          .to(bgLayerRef.current,   { filter: blurFilter(14), duration: 0.28, ease: 'power1.in' }, BLUR_AT)
           .to(substrateRef.current, {
-            x: stop.x + Math.sign(stop.x || -1) * 88,
-            y: stop.y + Math.sign(stop.y || -1) * 58,
-            scale: stop.scale * (1 + overshoot),
+            x: stop.x + dirX * overshootPx,
+            y: stop.y + dirY * overshootPx * 0.65,
+            scale: stop.scale * (1 + overshootScale),
             rotateX: 0,
             duration: whipDuration,
             ease: 'power4.out',
           }, WHIP_AT)
-          // Focus pull — blur clears as camera arrives
-          .to(bgLayerRef.current, { filter: 'invert(1) blur(0px)', duration: 0.35, ease: 'power1.out' }, BLUR_CLEAR_AT)
-          // SETTLE — pulls to exact stop with the station's calibrated tilt
+          .to(bgLayerRef.current, { filter: blurFilter(0), duration: 0.35, ease: 'power1.out' }, BLUR_CLR)
           .to(substrateRef.current, {
-            x: stop.x,
-            y: stop.y,
-            scale: stop.scale,
-            rotateX: stop.rotateX,
-            duration: settleDuration,
-            ease: 'power2.inOut',
+            x: stop.x, y: stop.y, scale: stop.scale, rotateX: stop.rotateX,
+            duration: settleDuration, ease: 'power2.inOut',
           }, SETTLE_AT);
       };
 
-      // ── Station A: rollercoaster sequence with hero exit ─────────────
-      const flyToStationARollercoaster = () => {
-        const stationA = getStationAStop();
-        // Override stationA.rotateX to settle at a slight tilt ("looking back at the station")
-        const stationAWithTilt: Stop = { ...stationA, rotateX: 10 };
-        gsap.killTweensOf([substrateRef.current, bgLayerRef.current, heroTextRef.current]);
-
-        // Hero text exits upward; substrate rollercoasters into Station A
-        gsap.to(heroTextRef.current, { opacity: 0, y: -45, duration: 0.38, ease: 'power2.in' });
-        flyToStationRollercoaster(stationAWithTilt, { whipDuration: 1.12, settleDuration: 0.52 });
+      // Backward: softer reverse without overshoot or blur.
+      const flyToReverse = (target: Target) => {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const stop = computeStop(target, vw, vh);
+        return gsap.timeline()
+          .to(substrateRef.current, {
+            x: stop.x, y: stop.y, scale: stop.scale, rotateX: stop.rotateX,
+            duration: 0.95, ease: 'power3.inOut',
+          });
       };
 
-      // ── Station zones and scroll progress tracking ──────────────────
-      const STOPS: Array<() => Stop> = [
-        getStationAStop, getStationBStop, getStationCStop, getStationDStop, getTitleBlockStop,
-      ];
-      // Settle tilts — the rotateX each station lands on AFTER the overshoot.
-      // Each gives a slightly different "perspective shift back" character.
-      // A=10° (looking back at trigger guard), B=35° (calibrated steep), C=8°, D=12°, T=0° (flat finale)
-      const SETTLE_TILTS = [10, 35, 8, 12, 0];
-      const TRIGGERS_PX = [TRIGGER_A, TRIGGER_B, TRIGGER_C, TRIGGER_D, TRIGGER_T];
-      let prevStation = -1;
+      // Hero entry/exit — handles text reveal alongside the camera move.
+      const flyToHero = () => {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const stop = computeStop(HERO, vw, vh);
+        gsap.set(heroTextRef.current, { rotateX: -stop.rotateX });
+        return gsap.timeline()
+          .to(substrateRef.current, {
+            x: stop.x, y: stop.y, scale: stop.scale, rotateX: stop.rotateX,
+            duration: 1.05, ease: 'power3.inOut',
+          })
+          .to(heroTextRef.current, {
+            opacity: 1, y: 0, duration: 0.55, ease: 'power3.out',
+          }, '-=0.35');
+      };
 
-      ScrollTrigger.create({
-        trigger: containerRef.current,
-        pin: true,
-        start: 'top top',
-        end: '+=7000',
-        invalidateOnRefresh: true,
-        onUpdate: (self) => {
-          const px = self.progress * 7000;
-          let targetStation = -1;
-          for (let i = TRIGGERS_PX.length - 1; i >= 0; i--) {
-            if (px >= TRIGGERS_PX[i]) { targetStation = i; break; }
-          }
-          if (targetStation === prevStation) return;
-          const goingForward = targetStation > prevStation;
-          prevStation = targetStation;
+      const exitHeroAndFlyTo = (target: Target) => {
+        // Hero text peels up & out, then standard rollercoaster.
+        gsap.to(heroTextRef.current, {
+          opacity: 0, y: -45, duration: 0.38, ease: 'power2.in',
+        });
+        return flyToRollercoaster(target, { whipDuration: 1.12, settleDuration: 0.52 });
+      };
 
-          if (targetStation === -1) {
-            // Return to hero zone — restore perspective tilt + show text
-            gsap.killTweensOf([substrateRef.current, bgLayerRef.current]);
-            flyTo(heroStop, { blur: false, duration: 1.1 });
-            gsap.to(heroTextRef.current, {
-              opacity: 1, y: 0, duration: 0.68, delay: 0.45, ease: 'power3.out',
-            });
-            setActiveStation(-1);
-          } else if (targetStation === 0 && goingForward) {
-            // Station A — rollercoaster + hero exit
-            flyToStationARollercoaster();
-            setActiveStation(0);
-          } else if (goingForward) {
-            // Stations B/C/D/T — rollercoaster overshoot + settle with the station's settle tilt
-            // Later stations get slightly tighter timing for momentum continuity
-            const tightening = Math.min(targetStation * 0.04, 0.16);
-            const baseStop = STOPS[targetStation]();
-            const stopWithSettleTilt: Stop = { ...baseStop, rotateX: SETTLE_TILTS[targetStation] };
-            flyToStationRollercoaster(stopWithSettleTilt, {
-              whipDuration: 1.12 - tightening,
-              settleDuration: 0.52,
-            });
-            setActiveStation(targetStation);
-          } else {
-            // Scrolling backwards — softer, faster reverse without overshoot
-            flyTo(STOPS[targetStation](), { blur: false, duration: 1.05 });
-            setActiveStation(targetStation);
+      // ─── State-machine controller ────────────────────────────────
+      const advance = (dir: 1 | -1) => {
+        if (isTransitioning) {
+          // Buffer at most ONE input — overwrite any previous buffer.
+          bufferedDir = dir;
+          return;
+        }
+        const nextIdx = currentIdx + dir;
+        if (nextIdx < -1 || nextIdx >= STATIONS.length) return; // clamp
+
+        const prevIdx = currentIdx;
+        setStation(nextIdx);
+        isTransitioning = true;
+
+        // Kill anything in flight on these targets before starting new tween
+        gsap.killTweensOf([substrateRef.current, bgLayerRef.current, heroTextRef.current]);
+
+        let tl: gsap.core.Timeline;
+        if (nextIdx === -1) {
+          // Back to hero
+          tl = flyToHero();
+        } else if (dir === 1 && prevIdx === -1) {
+          // Hero → first station: peel hero text away during the whip
+          tl = exitHeroAndFlyTo(STATIONS[nextIdx]);
+        } else if (dir === 1) {
+          // Forward station-to-station: tighten whip slightly for later stations
+          const tightening = Math.min(nextIdx * 0.03, 0.12);
+          tl = flyToRollercoaster(STATIONS[nextIdx], {
+            whipDuration: 1.05 - tightening,
+            settleDuration: 0.5,
+          });
+        } else {
+          // Backward: softer reverse
+          tl = flyToReverse(STATIONS[nextIdx]);
+        }
+
+        tl.eventCallback('onComplete', () => {
+          isTransitioning = false;
+          if (bufferedDir !== null) {
+            const d = bufferedDir;
+            bufferedDir = null;
+            advance(d);
           }
-        },
+        });
+      };
+
+      // When the intro completes, unlock input.
+      introTl.eventCallback('onComplete', () => {
+        isTransitioning = false;
+        if (bufferedDir !== null) {
+          const d = bufferedDir;
+          bufferedDir = null;
+          advance(d);
+        }
       });
 
+      // ─── Input listeners ──────────────────────────────────────────
+      // Wheel: debounced. Trackpads emit 60Hz tiny deltas during a single
+      // flick — collapse those into a single advance. We open a fresh
+      // cooldown window each time we see fresh strong wheel motion.
+      let wheelCooldownUntil = 0;
+      const onWheel = (e: WheelEvent) => {
+        e.preventDefault();
+        if (Math.abs(e.deltaY) < 8) return;          // ignore micro-deltas
+        const now = performance.now();
+        if (now < wheelCooldownUntil) return;
+        wheelCooldownUntil = now + 380;              // 380ms input lockout
+        advance(e.deltaY > 0 ? 1 : -1);
+      };
+
+      const onKey = (e: KeyboardEvent) => {
+        if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ' || e.key === 'Enter') {
+          e.preventDefault();
+          advance(1);
+        } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+          e.preventDefault();
+          advance(-1);
+        }
+      };
+
+      // Touch: simple Y-swipe with 40px threshold
+      let touchStartY = 0;
+      const onTouchStart = (e: TouchEvent) => { touchStartY = e.touches[0].clientY; };
+      const onTouchEnd = (e: TouchEvent) => {
+        const dy = touchStartY - e.changedTouches[0].clientY;
+        if (Math.abs(dy) > 40) advance(dy > 0 ? 1 : -1);
+      };
+
+      // Resize: recompute and SNAP to current target (no animation).
+      const onResize = () => {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const target = currentIdx === -1 ? HERO : STATIONS[currentIdx];
+        const stop = computeStop(target, vw, vh);
+        gsap.set(substrateRef.current, stop);
+        if (currentIdx === -1) {
+          gsap.set(heroTextRef.current, { rotateX: -stop.rotateX });
+        }
+      };
+
+      window.addEventListener('wheel', onWheel, { passive: false });
+      window.addEventListener('keydown', onKey);
+      window.addEventListener('touchstart', onTouchStart, { passive: true });
+      window.addEventListener('touchend', onTouchEnd, { passive: true });
+      window.addEventListener('resize', onResize);
+
+      // Cleanup is registered with the context — runs on ctx.revert()
+      return () => {
+        window.removeEventListener('wheel', onWheel);
+        window.removeEventListener('keydown', onKey);
+        window.removeEventListener('touchstart', onTouchStart);
+        window.removeEventListener('touchend', onTouchEnd);
+        window.removeEventListener('resize', onResize);
+      };
     }, containerRef);
+
     return () => ctx.revert();
   }, []);
+
+  // ── Render ─────────────────────────────────────────────────────────
+  // Build the substrate filter declaratively so toggling SUBSTRATE_NEEDS_INVERT
+  // re-renders the bg layer correctly.
+  const substrateImgStyle: React.CSSProperties = {
+    width: `${SUBSTRATE_W}px`,
+    height: `${SUBSTRATE_H}px`,
+    opacity: 0.9,
+    ...(SUBSTRATE_NEEDS_INVERT
+      ? { filter: 'invert(1)', mixBlendMode: 'screen' as const }
+      : {}),
+  };
 
   return (
     <div
       ref={containerRef}
       className="drawing-package drawing-scene w-screen h-screen overflow-hidden bg-slate-950"
       style={{ perspective: '4000px', perspectiveOrigin: '50% 40%' }}
+      data-testid="drawing-package-scene"
     >
-      {/* Station progress indicator — right edge, engineering-callout style */}
+      {/* Station progress indicator — engineering callout style */}
       <div
         className="fixed right-6 top-1/2 -translate-y-1/2 z-[70] flex flex-col gap-3 pointer-events-none"
         aria-label="Section navigator"
         data-testid="station-progress-indicator"
       >
-        {STATION_DEFS.map((s, i) => {
+        {STATIONS.map((s, i) => {
           const isActive = activeStation === i;
           const isVisited = activeStation > i;
           return (
@@ -386,7 +417,6 @@ export function DrawingPackagePage() {
               className="flex items-center gap-2 group"
               data-testid={`station-dot-${s.id}`}
             >
-              {/* Label — slides in when active */}
               <span
                 className="font-mono text-[10px] tracking-[0.18em] uppercase transition-all duration-300"
                 style={{
@@ -398,12 +428,7 @@ export function DrawingPackagePage() {
               >
                 {s.label}
               </span>
-              {/* Tick mark */}
-              <div
-                className="flex items-center gap-1.5"
-                style={{ transition: 'opacity 0.3s ease' }}
-              >
-                {/* Short horizontal rule — like a drawing callout tick */}
+              <div className="flex items-center gap-1.5" style={{ transition: 'opacity 0.3s ease' }}>
                 <div
                   className="h-px transition-all duration-300"
                   style={{
@@ -415,15 +440,11 @@ export function DrawingPackagePage() {
                         : 'oklch(0.50 0.01 245 / 0.5)',
                   }}
                 />
-                {/* Station ID box */}
                 <div
                   className="font-mono text-[10px] font-bold tracking-wider transition-all duration-300"
                   style={{
-                    width: '20px',
-                    height: '20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    width: '20px', height: '20px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
                     border: `1px solid ${isActive ? 'var(--dp-accent)' : isVisited ? 'oklch(0.70 0.21 255 / 0.4)' : 'oklch(0.50 0.01 245 / 0.35)'}`,
                     color: isActive ? 'var(--dp-accent)' : isVisited ? 'oklch(0.70 0.21 255 / 0.55)' : 'oklch(0.55 0.01 245 / 0.6)',
                     backgroundColor: isActive ? 'oklch(0.70 0.21 255 / 0.12)' : 'transparent',
@@ -438,100 +459,82 @@ export function DrawingPackagePage() {
         })}
       </div>
 
-      {/* Scroll hint — shown in hero zone, fades when first station fires */}
+      {/* Input hint — shown in hero zone, fades when first station fires */}
       <div
         className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[70] flex flex-col items-center gap-2 pointer-events-none transition-opacity duration-500"
         style={{ opacity: activeStation === -1 ? 1 : 0 }}
         data-testid="scroll-hint"
       >
         <span className="font-mono text-[10px] tracking-[0.28em] uppercase" style={{ color: 'var(--dp-text-dim)' }}>
-          SCROLL TO ADVANCE
+          SCROLL · ↓ · TAP TO ADVANCE
         </span>
         <div className="w-px h-8 overflow-hidden" style={{ backgroundColor: 'oklch(0.50 0.01 245 / 0.3)' }}>
           <div className="w-full h-4 animate-[dp-scroll-cue_1.8s_ease-in-out_infinite]" style={{ backgroundColor: 'var(--dp-accent)' }} />
         </div>
       </div>
-      {/* Task 2: preserve-3d so children share the same 3D coordinate space */}
+
+      {/* Substrate — the giant CAD drawing layer that the camera moves over */}
       <div
         ref={substrateRef}
         className="origin-top-left relative"
         style={{
-          width: `${SUBSTRATE_WIDTH}px`,
-          height: `${SUBSTRATE_HEIGHT}px`,
+          width: `${SUBSTRATE_W}px`,
+          height: `${SUBSTRATE_H}px`,
           transformStyle: 'preserve-3d',
         }}
       >
-        {/* SVG drawing layer — black-on-transparent SVG, invert(1) makes lines white.
-             mix-blend-screen lets white lines glow through on the dark bg-slate-950.
-             Isolated ref for Task 5 DOF blur. */}
         <img
           ref={bgLayerRef}
           src={`${import.meta.env.BASE_URL}assets/images/${SUBSTRATE_ASSET}`}
-          className="absolute inset-0 pointer-events-none select-none mix-blend-screen"
-          style={{
-            width: `${SUBSTRATE_WIDTH}px`,
-            height: `${SUBSTRATE_HEIGHT}px`,
-            filter: 'invert(1)',
-            opacity: 0.9,
-          }}
+          className="absolute inset-0 pointer-events-none select-none"
+          style={substrateImgStyle}
           alt=""
           aria-hidden="true"
         />
+
         <ProjectZone
           id="A"
           title="TRIGGER GUARD RADIUS"
           top="3200px"
           left="1450px"
-          layout={STATION_A_LAYOUT}
           imageSrc={`${import.meta.env.BASE_URL}assets/images/torque-wrench-03.webp`}
           active={activeStation === 0}
         />
-        {/* Station B — Buffer Tube Socket / Pistol Grip Mount */}
         <ProjectZone
           id="B"
           title="BUFFER TUBE SOCKET"
           top="833px"
           left="5567px"
-          layout={STATION_B_LAYOUT}
           imageSrc={`${import.meta.env.BASE_URL}assets/images/Billet Receiver Set AR15.webp`}
           active={activeStation === 1}
         />
-        {/* Station C — Industrial Dewatering Pump */}
         <ProjectZone
           id="C"
           title="INDUSTRIAL DEWATERING PUMP"
           top="4200px"
           left="3500px"
-          layout={STATION_C_LAYOUT}
           imageSrc={`${import.meta.env.BASE_URL}assets/images/pump-package-04.webp`}
           active={activeStation === 2}
         />
-        {/* Station D — Renderings & Visualizations */}
         <ProjectZone
           id="D"
           title="RENDERINGS"
           top="4000px"
           left="6800px"
-          layout={STATION_D_LAYOUT}
           imageSrc={`${import.meta.env.BASE_URL}assets/images/rendering-06.webp`}
           active={activeStation === 3}
         />
-        {/* Hero Text 3D Station */}
+
+        {/* Hero text — pinned at substrate (2000, 2000), counter-tilted to face the camera */}
         <div
           ref={heroRef}
           className="absolute"
-          style={{
-            left: '2000px',
-            top: '2000px',
-            transformStyle: 'preserve-3d',
-          }}
+          style={{ left: '2000px', top: '2000px', transformStyle: 'preserve-3d' }}
         >
           <div
             ref={heroTextRef}
             className="flex flex-col items-center justify-center w-[1600px] -translate-x-1/2 -translate-y-1/2 pointer-events-none origin-center"
-            style={{ 
-              transformStyle: 'preserve-3d'
-            }}
+            style={{ transformStyle: 'preserve-3d' }}
           >
             <div
               data-hero="header"
@@ -540,16 +543,14 @@ export function DrawingPackagePage() {
             >
               {portfolioData.personal.superHeader}
             </div>
-            
+
             <div data-hero="name" className="relative mb-12">
-              {/* Massive cinematic shadow behind text */}
               <h1
                 className="text-[180px] font-bold leading-none uppercase tracking-[0.05em] absolute top-2 left-2 blur-2xl opacity-50"
                 style={{ color: 'var(--dp-accent)', fontFamily: "'Michroma', 'Archivo', system-ui, sans-serif" }}
               >
                 {portfolioData.personal.name}
               </h1>
-              
               <h1
                 className="text-[180px] font-bold leading-none uppercase tracking-[0.05em] relative drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]"
                 style={{ color: 'var(--dp-text)', fontFamily: "'Michroma', 'Archivo', system-ui, sans-serif" }}
@@ -579,27 +580,27 @@ export function DrawingPackagePage() {
                 </span>
               </span>
             </div>
-            
-            <div data-hero="spec" className="flex gap-16 border-t-4 border-b-4 py-8 px-16 backdrop-blur-md bg-slate-950/40" style={{ borderColor: 'var(--dp-accent)' }}>
+
+            <div
+              data-hero="spec"
+              className="flex gap-16 border-t-4 border-b-4 py-8 px-16 backdrop-blur-md bg-slate-950/40"
+              style={{ borderColor: 'var(--dp-accent)' }}
+            >
               {([
-                ['ROLE', 'Systems Builder'],
-                ['TOL', '±0.0005" | 15 YRS'],
+                ['ROLE',   'Systems Builder'],
+                ['TOL',    '±0.0005" | 15 YRS'],
                 ['STATUS', 'AVAILABLE'],
               ] as const).map(([key, val]) => (
                 <div key={key} className="flex flex-col gap-2">
-                  <span className="text-xl font-bold tracking-widest" style={{ color: 'var(--dp-accent)' }}>
-                    {key}
-                  </span>
-                  <span className="text-2xl font-mono text-white tracking-wider">
-                    {val}
-                  </span>
+                  <span className="text-xl font-bold tracking-widest" style={{ color: 'var(--dp-accent)' }}>{key}</span>
+                  <span className="text-2xl font-mono text-white tracking-wider">{val}</span>
                 </div>
               ))}
             </div>
           </div>
         </div>
-        {/* Title Block — final camera stop in lower-right corner */}
-        <TitleBlockStation />
+
+        <TitleBlockStation active={activeStation === 4} />
       </div>
     </div>
   );
