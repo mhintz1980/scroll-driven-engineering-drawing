@@ -1,12 +1,18 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, useEffect } from 'react';
 import gsap from 'gsap';
 import { titleBlock, revisionTable } from '../../data/drawingPackageData';
 import { portfolioData } from '../../data/portfolioData';
 
-export function TitleBlockStation() {
+interface TitleBlockStationProps {
+  /** Set to true when the camera arrives at this station */
+  active?: boolean;
+}
+
+export function TitleBlockStation({ active }: TitleBlockStationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const tableRef = useRef<HTMLDivElement>(null);
   const hasTriggered = useRef(false);
+  const playIntroRef = useRef<(() => void) | null>(null);
   const calibrationMode =
     typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).has('calibrate');
@@ -32,6 +38,9 @@ export function TitleBlockStation() {
       });
     };
 
+    // Store for active-prop trigger
+    playIntroRef.current = playIntro;
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -49,14 +58,23 @@ export function TitleBlockStation() {
     return () => observer.disconnect();
   }, [calibrationMode]);
 
+  // When the camera arrives at this station, trigger the intro.
+  // Bypasses IntersectionObserver which can't detect CSS 3D transforms.
+  useEffect(() => {
+    if (active && !hasTriggered.current && playIntroRef.current) {
+      hasTriggered.current = true;
+      playIntroRef.current();
+    }
+  }, [active]);
+
   return (
     <div
       ref={containerRef}
       className="absolute pointer-events-none"
       style={{
-        top: '5800px',
-        left: '6400px',
-        width: '1000px',
+        top: '917px',
+        left: '1182px',
+        width: '185px',
         transformStyle: 'preserve-3d',
       }}
       data-zone-id="T"

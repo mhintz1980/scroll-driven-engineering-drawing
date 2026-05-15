@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ProjectZone } from './ProjectZone';
+import type { ProjectZoneLayout } from './ProjectZone';
 import { TitleBlockStation } from './TitleBlockStation';
 import { wordCycleData, portfolioData } from '../../data/portfolioData';
 import '../../styles/drawing-package.css';
@@ -12,14 +13,14 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
 }
 
 // ── Substrate dimensions ─────────────────────────────────────────────
-// Single source of truth. When the new SVG is dropped, only these two
-// numbers (and SUBSTRATE_ASSET) change.
-const SUBSTRATE_W = 8800;
-const SUBSTRATE_H = 6800;
-const SUBSTRATE_ASSET = 'Lower Receiver-Machined Forging (22).svg';
-// Whether the SVG needs runtime invert (white-on-dark). Set to false
-// once the SVG is pre-inverted in Inkscape.
-const SUBSTRATE_NEEDS_INVERT = true;
+// Native SVG viewBox: 1625 × 1075.  White strokes on transparent.
+// No runtime invert needed — the SVG is pre-inverted.
+const SUBSTRATE_W = 1625;
+const SUBSTRATE_H = 1075;
+const SUBSTRATE_ASSET = 'Lower Receiver_Final.svg';
+const SUBSTRATE_NEEDS_INVERT = false;
+// Migration scale factors (old 8800×6800 → native 1625×1075):
+//   X_SCALE = 5.415,  Y_SCALE = 6.326
 
 // ── Camera targets ───────────────────────────────────────────────────
 // Each target = a point on the substrate (in substrate-pixel coords) to
@@ -44,23 +45,46 @@ const WIDE: Target = {
 // Hero: cinematic perspective on the central drawing area.
 const HERO: Target = {
   id: 'hero', label: 'HERO',
-  cx: 2000, cy: 1920,
+  cx: 369, cy: 304,
   scale: 'hero', rotateX: 20,
 };
 
 // Project stations — listed in viewing order.
-// (cx, cy) was reverse-engineered from the previous hand-tuned stops:
-//   prev stop {x, y, scale} at baseline viewport (vw=975, vh=550) →
-//   cx = (vw/2 - x) / scale, cy = (vh/2 - y) / scale
-// This preserves the previous calibration EXACTLY at the baseline, but
-// scales correctly to any viewport (no more -3920 + 0.5*(vw-975) drift).
+// Coordinates in native SVG space (1625×1075).  Scale 6.5 keeps the
+// same visual framing as the old 1.2 on the 8800-wide substrate.
 const STATIONS: Target[] = [
-  { id: 'A', label: 'TRIGGER GUARD', cx: 1573, cy: 3338, scale: 1.2, rotateX: 10 },
-  { id: 'B', label: 'BUFFER TUBE',   cx: 5673, cy:  846, scale: 1.2, rotateX: 35 },
-  { id: 'C', label: 'PUMP PACKAGE',  cx: 3673, cy: 4379, scale: 1.2, rotateX:  8 },
-  { id: 'D', label: 'RENDERINGS',    cx: 6973, cy: 4179, scale: 1.2, rotateX: 12 },
-  { id: 'T', label: 'TITLE BLOCK',   cx: 6900, cy: 6025, scale: 1.2, rotateX:  0 },
+  { id: 'A', label: 'TRIGGER GUARD', cx: 291, cy: 528, scale: 6.5, rotateX: 10 },
+  { id: 'B', label: 'BUFFER TUBE',   cx: 1048, cy: 134, scale: 6.5, rotateX: 35 },
+  { id: 'C', label: 'PUMP PACKAGE',  cx: 678, cy: 692, scale: 6.5, rotateX:  8 },
+  { id: 'D', label: 'RENDERINGS',    cx: 1288, cy: 661, scale: 6.5, rotateX: 12 },
+  { id: 'T', label: 'TITLE BLOCK',   cx: 1274, cy: 953, scale: 6.5, rotateX:  0 },
 ];
+
+// ── Station layouts ──────────────────────────────────────────────────
+// Anchor = dot position within the 600×500 zone box.
+// Circle offset = where the detail circle floats (CSS absolute, relative
+// to zone origin).  These are starting values — Phase 3 calibration
+// will tune them visually.
+const STATION_A_LAYOUT: ProjectZoneLayout = {
+  pathD: '',
+  anchor: { x: 300, y: 250 },
+  circleStyle: { position: 'absolute', top: '-60px', left: '280px' },
+};
+const STATION_B_LAYOUT: ProjectZoneLayout = {
+  pathD: '',
+  anchor: { x: 300, y: 250 },
+  circleStyle: { position: 'absolute', top: '-80px', left: '300px' },
+};
+const STATION_C_LAYOUT: ProjectZoneLayout = {
+  pathD: '',
+  anchor: { x: 300, y: 250 },
+  circleStyle: { position: 'absolute', top: '-40px', left: '320px' },
+};
+const STATION_D_LAYOUT: ProjectZoneLayout = {
+  pathD: '',
+  anchor: { x: 300, y: 250 },
+  circleStyle: { position: 'absolute', top: '-60px', left: '300px' },
+};
 
 // ── Camera math ──────────────────────────────────────────────────────
 type Stop = { x: number; y: number; scale: number; rotateX: number };
@@ -70,7 +94,8 @@ function computeScale(t: Target, vw: number, vh: number): number {
     return Math.max(0.10, Math.min(vw * 0.88 / SUBSTRATE_W, vh * 0.88 / SUBSTRATE_H));
   }
   if (t.scale === 'hero') {
-    return Math.min(vw * 0.40 / 1600, vh * 0.38 / 560, 0.52);
+    // 295 ≈ 1600/5.415,  89 ≈ 560/6.326,  2.82 ≈ 0.52*5.415
+    return Math.min(vw * 0.40 / 295, vh * 0.38 / 89, 2.82);
   }
   return t.scale;
 }
@@ -164,11 +189,11 @@ export function DrawingPackagePage() {
           ...heroStop0,
           duration: 1.35, ease: 'power3.inOut',
         })
-        .set(heroTextRef.current, { opacity: 1 })
-        .to(superHeaderEl, { opacity: 1, x: 0, duration: 0.42, ease: 'power2.out' })
-        .to(nameWrapEl,    { clipPath: 'inset(0 0% 0 0)', duration: 0.9, ease: 'power3.inOut' }, '<0.1')
-        .to(subtitleEl,    { opacity: 1, x: 0, duration: 0.48, ease: 'power2.out' }, '<0.52')
-        .to(specEl,        { opacity: 1, y: 0, duration: 0.44, ease: 'power2.out' }, '<0.32');
+        .set(heroTextRef.current!, { opacity: 1 });
+      if (superHeaderEl) introTl.to(superHeaderEl, { opacity: 1, x: 0, duration: 0.42, ease: 'power2.out' });
+      if (nameWrapEl)    introTl.to(nameWrapEl,    { clipPath: 'inset(0 0% 0 0)', duration: 0.9, ease: 'power3.inOut' }, '<0.1');
+      if (subtitleEl)    introTl.to(subtitleEl,    { opacity: 1, x: 0, duration: 0.48, ease: 'power2.out' }, '<0.52');
+      if (specEl)        introTl.to(specEl,        { opacity: 1, y: 0, duration: 0.44, ease: 'power2.out' }, '<0.32');
 
       // ─── flyTo helpers ────────────────────────────────────────────
       // Rollercoaster: cinematic forward whip with overshoot + settle.
@@ -495,64 +520,70 @@ export function DrawingPackagePage() {
         <ProjectZone
           id="A"
           title="TRIGGER GUARD RADIUS"
-          top="3200px"
-          left="1450px"
+          top="278px"
+          left="-9px"
+          layout={STATION_A_LAYOUT}
           imageSrc={`${import.meta.env.BASE_URL}assets/images/torque-wrench-03.webp`}
           active={activeStation === 0}
         />
         <ProjectZone
           id="B"
           title="BUFFER TUBE SOCKET"
-          top="833px"
-          left="5567px"
+          top="-116px"
+          left="748px"
+          layout={STATION_B_LAYOUT}
           imageSrc={`${import.meta.env.BASE_URL}assets/images/Billet Receiver Set AR15.webp`}
           active={activeStation === 1}
         />
         <ProjectZone
           id="C"
           title="INDUSTRIAL DEWATERING PUMP"
-          top="4200px"
-          left="3500px"
+          top="442px"
+          left="378px"
+          layout={STATION_C_LAYOUT}
           imageSrc={`${import.meta.env.BASE_URL}assets/images/pump-package-04.webp`}
           active={activeStation === 2}
         />
         <ProjectZone
           id="D"
           title="RENDERINGS"
-          top="4000px"
-          left="6800px"
+          top="411px"
+          left="988px"
+          layout={STATION_D_LAYOUT}
           imageSrc={`${import.meta.env.BASE_URL}assets/images/rendering-06.webp`}
           active={activeStation === 3}
         />
 
-        {/* Hero text — pinned at substrate (2000, 2000), counter-tilted to face the camera */}
+        {/* Hero text — pinned on substrate, counter-tilted to face the camera.
+            Sizes are in substrate-pixels (tiny) because camera zoom ≈1.7 scales
+            them up to readable screen-pixels. */}
         <div
           ref={heroRef}
           className="absolute"
-          style={{ left: '2000px', top: '2000px', transformStyle: 'preserve-3d' }}
+          style={{ left: '369px', top: '304px', transformStyle: 'preserve-3d' }}
         >
           <div
             ref={heroTextRef}
-            className="flex flex-col items-center justify-center w-[1600px] -translate-x-1/2 -translate-y-1/2 pointer-events-none origin-center"
+            className="flex flex-col items-center justify-center w-[295px] -translate-x-1/2 -translate-y-1/2 pointer-events-none origin-center"
             style={{ transformStyle: 'preserve-3d' }}
           >
             <div
               data-hero="header"
-              className="text-[32px] uppercase tracking-[0.4em] mb-8 font-bold"
+              className="text-[6px] uppercase tracking-[0.4em] mb-[1.5px] font-bold"
               style={{ color: 'var(--dp-accent)' }}
             >
               {portfolioData.personal.superHeader}
             </div>
 
-            <div data-hero="name" className="relative mb-12">
+            <div data-hero="name" className="relative mb-[2px]">
               <h1
-                className="text-[180px] font-bold leading-none uppercase tracking-[0.05em] absolute top-2 left-2 blur-2xl opacity-50"
+                className="text-[33px] font-bold leading-none uppercase tracking-[0.05em] absolute top-[0.4px] left-[0.4px] blur-xs opacity-50"
                 style={{ color: 'var(--dp-accent)', fontFamily: "'Michroma', 'Archivo', system-ui, sans-serif" }}
               >
                 {portfolioData.personal.name}
               </h1>
               <h1
-                className="text-[180px] font-bold leading-none uppercase tracking-[0.05em] relative drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]"
+                className="text-[33px] font-bold leading-none uppercase tracking-[0.05em] relative drop-shadow-[0_0_4px_rgba(255,255,255,0.3)]"
                 style={{ color: 'var(--dp-text)', fontFamily: "'Michroma', 'Archivo', system-ui, sans-serif" }}
               >
                 {portfolioData.personal.name}
@@ -561,7 +592,7 @@ export function DrawingPackagePage() {
 
             <div
               data-hero="subtitle"
-              className="text-[28px] uppercase tracking-[0.2em] mb-16 inline-flex items-center gap-6"
+              className="text-[5px] uppercase tracking-[0.2em] mb-[3px] inline-flex items-center gap-px"
               style={{ color: 'var(--dp-text-dim, #94a3b8)' }}
             >
               <span>Systems Designed For</span>
@@ -583,7 +614,7 @@ export function DrawingPackagePage() {
 
             <div
               data-hero="spec"
-              className="flex gap-16 border-t-4 border-b-4 py-8 px-16 backdrop-blur-md bg-slate-950/40"
+              className="flex gap-[3px] border-t border-b py-[1.5px] px-[3px] backdrop-blur-[1px] bg-slate-950/40"
               style={{ borderColor: 'var(--dp-accent)' }}
             >
               {([
@@ -591,9 +622,9 @@ export function DrawingPackagePage() {
                 ['TOL',    '±0.0005" | 15 YRS'],
                 ['STATUS', 'AVAILABLE'],
               ] as const).map(([key, val]) => (
-                <div key={key} className="flex flex-col gap-2">
-                  <span className="text-xl font-bold tracking-widest" style={{ color: 'var(--dp-accent)' }}>{key}</span>
-                  <span className="text-2xl font-mono text-white tracking-wider">{val}</span>
+                <div key={key} className="flex flex-col gap-[0.5px]">
+                  <span className="text-[3.5px] font-bold tracking-widest" style={{ color: 'var(--dp-accent)' }}>{key}</span>
+                  <span className="text-[4.5px] font-mono text-white tracking-wider">{val}</span>
                 </div>
               ))}
             </div>
