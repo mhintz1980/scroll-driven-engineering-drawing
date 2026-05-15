@@ -12,7 +12,9 @@ export function TitleBlockStation({ active }: TitleBlockStationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const tableRef = useRef<HTMLDivElement>(null);
   const hasTriggered = useRef(false);
+  const hasMounted = useRef(false);
   const playIntroRef = useRef<(() => void) | null>(null);
+  const resetIntroRef = useRef<(() => void) | null>(null);
   const calibrationMode =
     typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).has('calibrate');
@@ -25,11 +27,18 @@ export function TitleBlockStation({ active }: TitleBlockStationProps) {
       return;
     }
 
-    gsap.set(tableRef.current, { opacity: 0, y: 30 });
+    const resetIntro = () => {
+      if (!tableRef.current) return;
+      gsap.killTweensOf(tableRef.current);
+      gsap.set(tableRef.current, { opacity: 0, y: 30 });
+    };
 
-    const container = containerRef.current;
+    resetIntro();
+    resetIntroRef.current = resetIntro;
+
     const playIntro = () => {
       if (!tableRef.current) return;
+      resetIntro();
       gsap.to(tableRef.current, {
         opacity: 1,
         y: 0,
@@ -40,41 +49,35 @@ export function TitleBlockStation({ active }: TitleBlockStationProps) {
 
     // Store for active-prop trigger
     playIntroRef.current = playIntro;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && !hasTriggered.current) {
-            hasTriggered.current = true;
-            playIntro();
-            observer.unobserve(container);
-          }
-        });
-      },
-      { threshold: 0.15 },
-    );
-
-    observer.observe(container);
-    return () => observer.disconnect();
+    return undefined;
   }, [calibrationMode]);
 
-  // When the camera arrives at this station, trigger the intro.
-  // Bypasses IntersectionObserver which can't detect CSS 3D transforms.
+  // The active prop is canonical for the event-driven camera.
   useEffect(() => {
+    if (calibrationMode) return;
+
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      return;
+    }
+
     if (active && !hasTriggered.current && playIntroRef.current) {
       hasTriggered.current = true;
       playIntroRef.current();
+    } else if (!active) {
+      hasTriggered.current = false;
+      resetIntroRef.current?.();
     }
-  }, [active]);
+  }, [active, calibrationMode]);
 
   return (
     <div
       ref={containerRef}
       className="absolute pointer-events-none"
       style={{
-        top: '917px',
-        left: '1182px',
-        width: '185px',
+        top: '910px',
+        left: '1196px',
+        width: '130px',
         transformStyle: 'preserve-3d',
       }}
       data-zone-id="T"
@@ -85,22 +88,22 @@ export function TitleBlockStation({ active }: TitleBlockStationProps) {
 
       <div ref={tableRef}>
         <div
-          className="border-2 bg-slate-950/95 backdrop-blur-sm"
+          className="border-[0.5px] bg-slate-950/95 backdrop-blur-[0.5px]"
           style={{ borderColor: 'var(--dp-accent)' }}
         >
           {/* Header */}
           <div
-            className="border-b-2 px-6 py-4 text-center"
+            className="border-b-[0.5px] px-2 py-1 text-center"
             style={{ borderColor: 'var(--dp-accent)' }}
           >
             <div
-              className="text-3xl font-bold tracking-[0.12em] uppercase"
+              className="text-[5px] font-bold tracking-[0.12em] uppercase"
               style={{ color: 'var(--dp-accent)' }}
             >
               {titleBlock.drawingTitle}
             </div>
             <div
-              className="text-base tracking-[0.2em] mt-1"
+              className="text-[2px] tracking-[0.2em] mt-0.5"
               style={{ color: 'var(--dp-text-dim)' }}
             >
               {titleBlock.sheetLabel}
@@ -109,17 +112,17 @@ export function TitleBlockStation({ active }: TitleBlockStationProps) {
 
           {/* Revision table */}
           <div
-            className="border-b px-6 py-3"
+            className="border-b-[0.5px] px-2 py-1"
             style={{ borderColor: 'var(--dp-border-dim)' }}
           >
             <div
-              className="text-lg uppercase tracking-[0.18em] mb-2 font-bold"
+              className="text-[2px] uppercase tracking-[0.18em] mb-0.5 font-bold"
               style={{ color: 'var(--dp-accent)' }}
             >
               REVISION HISTORY
             </div>
             <table
-              className="w-full text-xl"
+              className="w-full text-[2px]"
               style={{ color: 'var(--dp-text)' }}
             >
               <tbody>
@@ -130,7 +133,7 @@ export function TitleBlockStation({ active }: TitleBlockStationProps) {
                     style={{ borderColor: 'var(--dp-border-dim)' }}
                   >
                     <td
-                      className="pr-3 py-1.5 font-bold w-16"
+                      className="pr-1 py-0.5 font-bold w-4"
                       style={{
                         color:
                           row.rev === 'C'
@@ -140,10 +143,10 @@ export function TitleBlockStation({ active }: TitleBlockStationProps) {
                     >
                       {row.rev}
                     </td>
-                    <td className="pr-3 py-1.5 w-24 font-mono" style={{ color: 'var(--dp-text-dim)' }}>
+                    <td className="pr-1 py-0.5 w-7 font-mono" style={{ color: 'var(--dp-text-dim)' }}>
                       {row.date}
                     </td>
-                    <td className="py-1.5">{row.description}</td>
+                    <td className="py-0.5">{row.description}</td>
                   </tr>
                 ))}
               </tbody>
@@ -151,7 +154,7 @@ export function TitleBlockStation({ active }: TitleBlockStationProps) {
           </div>
 
           {/* Field grid */}
-          <div className="grid grid-cols-4 gap-1 px-6 py-4">
+          <div className="grid grid-cols-4 gap-0.5 px-2 py-1">
             {(
               [
                 ['DRAWN BY', titleBlock.drawnBy],
@@ -162,12 +165,12 @@ export function TitleBlockStation({ active }: TitleBlockStationProps) {
             ).map(([label, value]) => (
               <div key={label}>
                 <div
-                  className="text-sm uppercase tracking-[0.18em] mb-0.5"
+                  className="text-[1.5px] uppercase tracking-[0.18em] mb-0.5"
                   style={{ color: 'var(--dp-text-dim)' }}
                 >
                   {label}
                 </div>
-                <div className="text-xl font-bold" style={{ color: 'var(--dp-text)' }}>
+                <div className="text-[2.2px] font-bold" style={{ color: 'var(--dp-text)' }}>
                   {value}
                 </div>
               </div>
@@ -176,39 +179,39 @@ export function TitleBlockStation({ active }: TitleBlockStationProps) {
 
           {/* Contact row */}
           <div
-            className="border-t-2 grid grid-cols-3 gap-1 px-6 py-4"
+            className="border-t-[0.5px] grid grid-cols-3 gap-0.5 px-2 py-1"
             style={{ borderColor: 'var(--dp-accent)' }}
           >
             <div>
               <div
-                className="text-sm uppercase tracking-[0.18em] mb-0.5"
+                className="text-[1.5px] uppercase tracking-[0.18em] mb-0.5"
                 style={{ color: 'var(--dp-text-dim)' }}
               >
                 CONTACT
               </div>
-              <div className="text-xl" style={{ color: 'var(--dp-text)' }}>
+              <div className="text-[2px]" style={{ color: 'var(--dp-text)' }}>
                 {portfolioData.personal.email}
               </div>
             </div>
             <div>
               <div
-                className="text-sm uppercase tracking-[0.18em] mb-0.5"
+                className="text-[1.5px] uppercase tracking-[0.18em] mb-0.5"
                 style={{ color: 'var(--dp-text-dim)' }}
               >
                 LOCATION
               </div>
-              <div className="text-xl" style={{ color: 'var(--dp-text)' }}>
+              <div className="text-[2px]" style={{ color: 'var(--dp-text)' }}>
                 {portfolioData.personal.location}
               </div>
             </div>
             <div>
               <div
-                className="text-sm uppercase tracking-[0.18em] mb-0.5"
+                className="text-[1.5px] uppercase tracking-[0.18em] mb-0.5"
                 style={{ color: 'var(--dp-text-dim)' }}
               >
                 STATUS
               </div>
-              <div className="text-xl font-bold" style={{ color: 'oklch(0.72 0.19 155)' }}>
+              <div className="text-[2px] font-bold" style={{ color: 'oklch(0.72 0.19 155)' }}>
                 AVAILABLE FOR WORK
               </div>
             </div>

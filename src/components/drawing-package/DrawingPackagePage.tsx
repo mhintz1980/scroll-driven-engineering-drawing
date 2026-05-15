@@ -42,11 +42,11 @@ const WIDE: Target = {
   scale: 'wide', rotateX: 0,
 };
 
-// Hero: cinematic perspective on the central drawing area.
+// Hero: full drawing overview with the nameplate sitting in substrate space.
 const HERO: Target = {
   id: 'hero', label: 'HERO',
-  cx: 369, cy: 304,
-  scale: 'hero', rotateX: 20,
+  cx: SUBSTRATE_W / 2, cy: SUBSTRATE_H / 2,
+  scale: 'wide', rotateX: 0,
 };
 
 // Project stations — listed in viewing order.
@@ -57,7 +57,7 @@ const STATIONS: Target[] = [
   { id: 'B', label: 'BUFFER TUBE',   cx: 1048, cy: 134, scale: 6.5, rotateX: 35 },
   { id: 'C', label: 'PUMP PACKAGE',  cx: 678, cy: 692, scale: 6.5, rotateX:  8 },
   { id: 'D', label: 'RENDERINGS',    cx: 1288, cy: 661, scale: 6.5, rotateX: 12 },
-  { id: 'T', label: 'TITLE BLOCK',   cx: 1274, cy: 953, scale: 6.5, rotateX:  0 },
+  { id: 'T', label: 'TITLE BLOCK',   cx: 1274, cy: 953, scale: 5.4, rotateX:  0 },
 ];
 
 // ── Station layouts ──────────────────────────────────────────────────
@@ -67,23 +67,23 @@ const STATIONS: Target[] = [
 // will tune them visually.
 const STATION_A_LAYOUT: ProjectZoneLayout = {
   pathD: '',
-  anchor: { x: 300, y: 250 },
-  circleStyle: { position: 'absolute', top: '-60px', left: '280px' },
+  anchor: { x: 291, y: 250 },
+  circleStyle: { position: 'absolute', top: '235px', left: '285px' },
 };
 const STATION_B_LAYOUT: ProjectZoneLayout = {
   pathD: '',
-  anchor: { x: 300, y: 250 },
-  circleStyle: { position: 'absolute', top: '-80px', left: '300px' },
+  anchor: { x: 300, y: 134 },
+  circleStyle: { position: 'absolute', top: '150px', left: '285px' },
 };
 const STATION_C_LAYOUT: ProjectZoneLayout = {
   pathD: '',
   anchor: { x: 300, y: 250 },
-  circleStyle: { position: 'absolute', top: '-40px', left: '320px' },
+  circleStyle: { position: 'absolute', top: '240px', left: '285px' },
 };
 const STATION_D_LAYOUT: ProjectZoneLayout = {
   pathD: '',
   anchor: { x: 300, y: 250 },
-  circleStyle: { position: 'absolute', top: '-60px', left: '300px' },
+  circleStyle: { position: 'absolute', top: '245px', left: '285px' },
 };
 
 // ── Camera math ──────────────────────────────────────────────────────
@@ -94,7 +94,8 @@ function computeScale(t: Target, vw: number, vh: number): number {
     return Math.max(0.10, Math.min(vw * 0.88 / SUBSTRATE_W, vh * 0.88 / SUBSTRATE_H));
   }
   if (t.scale === 'hero') {
-    // 295 ≈ 1600/5.415,  89 ≈ 560/6.326,  2.82 ≈ 0.52*5.415
+    // Retained for future close-up hero experiments. Current HERO uses 'wide'
+    // so the opening state shows the complete drawing overview.
     return Math.min(vw * 0.40 / 295, vh * 0.38 / 89, 2.82);
   }
   return t.scale;
@@ -521,7 +522,7 @@ export function DrawingPackagePage() {
           id="A"
           title="TRIGGER GUARD RADIUS"
           top="278px"
-          left="-9px"
+          left="0px"
           layout={STATION_A_LAYOUT}
           imageSrc={`${import.meta.env.BASE_URL}assets/images/torque-wrench-03.webp`}
           active={activeStation === 0}
@@ -529,7 +530,7 @@ export function DrawingPackagePage() {
         <ProjectZone
           id="B"
           title="BUFFER TUBE SOCKET"
-          top="-116px"
+          top="0px"
           left="748px"
           layout={STATION_B_LAYOUT}
           imageSrc={`${import.meta.env.BASE_URL}assets/images/Billet Receiver Set AR15.webp`}
@@ -555,35 +556,35 @@ export function DrawingPackagePage() {
         />
 
         {/* Hero text — pinned on substrate, counter-tilted to face the camera.
-            Sizes are in substrate-pixels (tiny) because camera zoom ≈1.7 scales
-            them up to readable screen-pixels. */}
+            Sizes are in substrate-pixels because the overview camera scales
+            them down to readable screen-pixels. */}
         <div
           ref={heroRef}
           className="absolute"
-          style={{ left: '369px', top: '304px', transformStyle: 'preserve-3d' }}
+          style={{ left: '812.5px', top: '537.5px', transformStyle: 'preserve-3d' }}
         >
           <div
             ref={heroTextRef}
-            className="flex flex-col items-center justify-center w-[295px] -translate-x-1/2 -translate-y-1/2 pointer-events-none origin-center"
+            className="flex flex-col items-center justify-center w-[920px] -translate-x-1/2 -translate-y-1/2 pointer-events-none origin-center"
             style={{ transformStyle: 'preserve-3d' }}
           >
             <div
               data-hero="header"
-              className="text-[6px] uppercase tracking-[0.4em] mb-[1.5px] font-bold"
+              className="text-[18px] uppercase tracking-[0.4em] mb-[6px] font-bold"
               style={{ color: 'var(--dp-accent)' }}
             >
               {portfolioData.personal.superHeader}
             </div>
 
-            <div data-hero="name" className="relative mb-[2px]">
+            <div data-hero="name" className="relative mb-[8px]">
               <h1
-                className="text-[33px] font-bold leading-none uppercase tracking-[0.05em] absolute top-[0.4px] left-[0.4px] blur-xs opacity-50"
+                className="text-[104px] font-bold leading-none uppercase tracking-[0.05em] absolute top-[1.5px] left-[1.5px] blur-xs opacity-50"
                 style={{ color: 'var(--dp-accent)', fontFamily: "'Michroma', 'Archivo', system-ui, sans-serif" }}
               >
                 {portfolioData.personal.name}
               </h1>
               <h1
-                className="text-[33px] font-bold leading-none uppercase tracking-[0.05em] relative drop-shadow-[0_0_4px_rgba(255,255,255,0.3)]"
+                className="text-[104px] font-bold leading-none uppercase tracking-[0.05em] relative drop-shadow-[0_0_12px_rgba(255,255,255,0.3)]"
                 style={{ color: 'var(--dp-text)', fontFamily: "'Michroma', 'Archivo', system-ui, sans-serif" }}
               >
                 {portfolioData.personal.name}
@@ -592,7 +593,7 @@ export function DrawingPackagePage() {
 
             <div
               data-hero="subtitle"
-              className="text-[5px] uppercase tracking-[0.2em] mb-[3px] inline-flex items-center gap-px"
+              className="text-[16px] uppercase tracking-[0.2em] mb-[10px] inline-flex items-center gap-[3px]"
               style={{ color: 'var(--dp-text-dim, #94a3b8)' }}
             >
               <span>Systems Designed For</span>
@@ -614,7 +615,7 @@ export function DrawingPackagePage() {
 
             <div
               data-hero="spec"
-              className="flex gap-[3px] border-t border-b py-[1.5px] px-[3px] backdrop-blur-[1px] bg-slate-950/40"
+              className="flex gap-[10px] border-t border-b py-[5px] px-[10px] backdrop-blur-[1px] bg-slate-950/40"
               style={{ borderColor: 'var(--dp-accent)' }}
             >
               {([
@@ -622,9 +623,9 @@ export function DrawingPackagePage() {
                 ['TOL',    '±0.0005" | 15 YRS'],
                 ['STATUS', 'AVAILABLE'],
               ] as const).map(([key, val]) => (
-                <div key={key} className="flex flex-col gap-[0.5px]">
-                  <span className="text-[3.5px] font-bold tracking-widest" style={{ color: 'var(--dp-accent)' }}>{key}</span>
-                  <span className="text-[4.5px] font-mono text-white tracking-wider">{val}</span>
+                <div key={key} className="flex flex-col gap-[2px]">
+                  <span className="text-[12px] font-bold tracking-widest" style={{ color: 'var(--dp-accent)' }}>{key}</span>
+                  <span className="text-[15px] font-mono text-white tracking-wider">{val}</span>
                 </div>
               ))}
             </div>

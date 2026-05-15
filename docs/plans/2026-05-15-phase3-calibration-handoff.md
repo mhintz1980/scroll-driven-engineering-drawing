@@ -5,6 +5,64 @@
 **Branch:** `scroll-driven-engineering-drawing` tracking `engineering-drawing/main`
 **Dev server:** `npm run dev -- --port 5174` → `http://127.0.0.1:5174/Mark_Hintz-Portfolio-v2/drawing-package`
 **Build status:** ✅ green (`npm run build` passes, zero TS errors, zero console errors)
+**Phase 3 status:** ✅ complete at baseline desktop viewports
+
+---
+
+## Phase 3 Calibration Completed
+
+The native `1625×1075` substrate now has a verified baseline station map. The major fixes were:
+
+1. **Hero camera state corrected**
+   - Hero now uses the full drawing overview instead of the former detail close-up.
+   - Hero target: `cx: 812.5`, `cy: 537.5`, `scale: wide`, `rotateX: 0`.
+   - Verified 975×550 hero transform: `translate(121.686px, 33px) scale(0.4502)`.
+
+2. **ProjectZone inactive state fixed**
+   - Removed the runtime IntersectionObserver trigger path.
+   - `active` is canonical for A/B/C/D station reveals.
+   - First mount skips animation, so inactive circles and labels stay hidden on hero load.
+   - Calibration mode still forces overlays visible.
+
+3. **Native-substrate detail geometry calibrated**
+   - Detail lift is now `z: 75`, not old-substrate `z: 400`.
+   - Detail circle size is `clamp(34px, 5.7vw, 50px)`.
+   - Label bars sit inside the lower circle arc so they remain in-frame.
+
+4. **TitleBlockStation calibrated**
+   - Uses active-prop triggering like ProjectZone.
+   - Camera target is `cx: 1274`, `cy: 953`, `scale: 5.4`, `rotateX: 0`.
+   - Component position is `top: 910px`, `left: 1196px`, `width: 130px`.
+
+### Current Camera Targets
+
+```tsx
+const STATIONS: Target[] = [
+  { id: 'A', label: 'TRIGGER GUARD', cx: 291,  cy: 528, scale: 6.5, rotateX: 10 },
+  { id: 'B', label: 'BUFFER TUBE',   cx: 1048, cy: 134, scale: 6.5, rotateX: 35 },
+  { id: 'C', label: 'PUMP PACKAGE',  cx: 678,  cy: 692, scale: 6.5, rotateX: 8 },
+  { id: 'D', label: 'RENDERINGS',    cx: 1288, cy: 661, scale: 6.5, rotateX: 12 },
+  { id: 'T', label: 'TITLE BLOCK',   cx: 1274, cy: 953, scale: 5.4, rotateX: 0 },
+];
+```
+
+### Current Station Layouts
+
+| Station | top | left | anchor | circleStyle |
+|---|---:|---:|---|---|
+| A | `278px` | `0px` | `(291,250)` | `top: 235px; left: 285px` |
+| B | `0px` | `748px` | `(300,134)` | `top: 150px; left: 285px` |
+| C | `442px` | `378px` | `(300,250)` | `top: 240px; left: 285px` |
+| D | `411px` | `988px` | `(300,250)` | `top: 245px; left: 285px` |
+
+### Verification
+
+- `npm run build` passes.
+- Playwright browser pass at `975×550`, `1280×720`, `1440×900`, and `1920×1080`.
+- Hero state: A/B/C/D circles hidden, A/B/C/D labels hidden, title block hidden.
+- Active station states: circles and labels stay in-frame at every tested viewport.
+- Title block state: panel stays in-frame at every tested viewport.
+- `?calibrate=1`: A/B/C/D circles, labels, and title block are visible with no console errors.
 
 ---
 
@@ -43,59 +101,44 @@ All coordinates were mechanically converted:
 - TitleBlockStation position and width scaled
 - `computeScale` hero formula constants updated (1600→295, 560→89, 0.52→2.82)
 
-**Important:** The old substrate was non-uniformly stretched (X and Y scale factors differ), so the drawing now has correct proportions but station framing needs visual calibration. The math got us in the ballpark, not pixel-perfect.
+**Important:** The old substrate was non-uniformly stretched (X and Y scale factors differ), so the drawing now has correct proportions. Phase 3 visual calibration has since replaced the rough mechanical conversion values with the verified map at the top of this file.
 
 ---
 
-## What needs to happen now: Phase 3 — Calibration
+## What needs to happen now: Phase 4 — Prune
 
-The page compiles and runs. The drawing renders at native resolution with white strokes. Camera movement works (wheel/key/touch → station-by-station advance). But the station positions, hero text sizing, and ProjectZone anchor geometry all need visual tuning on the new coordinate system.
+The page compiles, runs, and has a verified calibrated station map. Next work should remove dead compatibility code and duplicate assets without changing the calibrated coordinates.
 
-### Calibration workflow
+### Prune workflow
 
 1. Start the dev server: `npm run dev -- --port 5174`
-2. Open `http://127.0.0.1:5174/Mark_Hintz-Portfolio-v2/drawing-package?calibrate=1`
-3. The `?calibrate=1` flag forces all station zones visible with amber border overlays
-4. Step through each station (scroll/arrow keys) and verify framing
-5. Adjust values in `DrawingPackagePage.tsx` and hot-reload
+2. Preserve the Phase 3 camera and station layout values above
+3. Remove duplicate substrate assets and dead runtime fields
+4. Re-run `npm run build`
+5. Run the 975×550 browser sanity check, plus `?calibrate=1`
 
-### What to tune
+### Values to preserve
 
-**Station camera targets** (lines ~58-63 in DrawingPackagePage.tsx):
+**Station camera targets:**
 ```tsx
 const STATIONS: Target[] = [
   { id: 'A', label: 'TRIGGER GUARD', cx: 291, cy: 528, scale: 6.5, rotateX: 10 },
   { id: 'B', label: 'BUFFER TUBE',   cx: 1048, cy: 134, scale: 6.5, rotateX: 35 },
   { id: 'C', label: 'PUMP PACKAGE',  cx: 678, cy: 692, scale: 6.5, rotateX:  8 },
   { id: 'D', label: 'RENDERINGS',    cx: 1288, cy: 661, scale: 6.5, rotateX: 12 },
-  { id: 'T', label: 'TITLE BLOCK',   cx: 1274, cy: 953, scale: 6.5, rotateX:  0 },
+  { id: 'T', label: 'TITLE BLOCK',   cx: 1274, cy: 953, scale: 5.4, rotateX:  0 },
 ];
 ```
-- `cx/cy` = substrate point (in native 1625×1075 SVG pixels) to center under the viewport
-- `scale` = zoom factor — 6.5 is the converted value; may need per-station tuning
-- These should target interesting drawing features (trigger guard detail, buffer tube socket, etc.)
 
-**ProjectZone positions** (lines ~521-556):
-- `top` / `left` = where the 600×500 zone box sits on the substrate
-- Currently computed as `cx - anchor.x` and `cy - anchor.y` with anchor at center (300, 250)
-- The zone boxes are large relative to the substrate (600px on a 1625px substrate = 37%) — that's OK because the camera zooms in enough that only a small part is visible
+**Hero:**
+- Target: `cx: 812.5`, `cy: 537.5`, `scale: wide`, `rotateX: 0`
+- Text: `left: 812.5px`, `top: 537.5px`, width `920px`
 
-**ProjectZone layout objects** (lines ~66-89):
-- `anchor` = dot position within the 600×500 zone SVG viewBox
-- `circleStyle` = CSS absolute position of the detail circle within the zone
-- Currently all anchors are at (300, 250) center — should be varied per station
+**ProjectZone detail geometry:**
+- Circle size: `clamp(34px, 5.7vw, 50px)`
+- Lift: `z: 75`
 
-**Hero text** (lines ~558-630):
-- Position: `left: 369px, top: 304px` on substrate
-- Container width: `295px`
-- Font sizes are tiny in substrate-pixels (33px name, 6px header, 5px subtitle, 3.5-4.5px spec) — they get scaled up by the camera zoom (~1.7 at hero stop) to readable screen-pixels
-- These may need adjustment if they look too small/large on screen
-
-**TitleBlockStation** (in TitleBlockStation.tsx, lines ~63-67):
-- Position: `top: 917px, left: 1182px, width: 185px`
-- Internal font sizes (text-3xl, text-xl, text-2xl, etc.) are in screen-space CSS classes but will appear at 6.5× scale — likely way too big. May need scaling down.
-
-### Viewports to test
+### Viewports to keep testing
 - 975×550 (baseline)
 - 1280×720
 - 1440×900
@@ -125,18 +168,10 @@ const STATIONS: Target[] = [
 ## Git state
 
 ```
-## scroll-driven-engineering-drawing...engineering-drawing/main
- M .continue-here.md
- M package-lock.json
- M package.json
- M src/components/drawing-package/DrawingPackagePage.tsx
- M src/components/drawing-package/TitleBlockStation.tsx
-?? docs/the-handoff-and-plan-from-other-agent-session.md
+Run `git status --short --branch` for current state. The Phase 3 calibration changes were intentionally left uncommitted for review.
 ```
 
-All changes are uncommitted. `docs/the-handoff-and-plan-from-other-agent-session.md` is untracked — preserve it.
-
-## After calibration (Phase 4 — Prune)
+## Phase 4 — Prune
 
 - Delete duplicate substrates: `Machined Forging (1).svg`, `(22).svg`, `-11.AI.svg`
 - Delete dead `pathD` from `ProjectZoneLayout` interface

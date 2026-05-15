@@ -2,6 +2,8 @@ import { useLayoutEffect, useRef, useState, useEffect } from 'react';
 import type { CSSProperties } from 'react';
 import gsap from 'gsap';
 
+const DETAIL_Z = 75;
+
 export interface ProjectZoneLayout {
   pathD: string; // Kept for interface compatibility but we will use dynamic 3D lines
   anchor: {
@@ -32,8 +34,10 @@ export function ProjectZone({ id, title, top, left, layout, imageSrc, active }: 
   const lineRef = useRef<HTMLDivElement>(null);
   
   const hasTriggered = useRef(false);
+  const hasMounted = useRef(false);
   // Stable ref to the intro function so it can be called from multiple effects
   const playIntroRef = useRef<(() => void) | null>(null);
+  const resetZoneRef = useRef<(() => void) | null>(null);
   const calibrationMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('calibrate');
 
   const [lineMath, setLineMath] = useState({ L: 0, aZ: 0, aY: 0 });
@@ -52,7 +56,7 @@ export function ProjectZone({ id, title, top, left, layout, imageSrc, active }: 
       
       const dx = cx - layout.anchor.x;
       const dy = cy - layout.anchor.y;
-      const dz = 400; // Target Z elevation
+      const dz = DETAIL_Z;
       
       const L = Math.sqrt(dx*dx + dy*dy + dz*dz);
       const aZ = Math.atan2(dy, dx);
@@ -94,6 +98,7 @@ export function ProjectZone({ id, title, top, left, layout, imageSrc, active }: 
     };
 
     resetZone();
+    resetZoneRef.current = resetZone;
     const container = containerRef.current;
     if (!container) return undefined;
 
@@ -120,13 +125,13 @@ export function ProjectZone({ id, title, top, left, layout, imageSrc, active }: 
         duration: 0.6,
         ease: 'power3.out',
       }, '-=0.1')
-      // 3. Detail circle scales up AND translates to Z=400 to meet the line
+      // 3. Detail circle scales up and lifts off the substrate to meet the line
       .to(
         circleRef.current,
         {
           scale: 1,
           opacity: 1,
-          z: 400,
+          z: DETAIL_Z,
           rotationZ: 0,
           duration: 1.2,
           ease: 'expo.out',
@@ -164,7 +169,7 @@ export function ProjectZone({ id, title, top, left, layout, imageSrc, active }: 
     if (calibrationMode) {
       if (dotRef.current && dotInnerRef.current && circleRef.current && labelRef.current && textRef.current && lineRef.current) {
         gsap.set([dotRef.current, dotInnerRef.current], { scale: 1, opacity: 1, transformOrigin: 'center' });
-        gsap.set(circleRef.current, { scale: 1, opacity: 1, rotationZ: 0, z: 400 });
+        gsap.set(circleRef.current, { scale: 1, opacity: 1, rotationZ: 0, z: DETAIL_Z });
         gsap.set(labelRef.current, { y: 0, opacity: 1, rotateX: 0 });
         gsap.set(textRef.current, { opacity: 1, filter: 'blur(0px)' });
         gsap.set(lineRef.current, { scaleX: 1, opacity: 0.8 });
@@ -172,31 +177,27 @@ export function ProjectZone({ id, title, top, left, layout, imageSrc, active }: 
       return undefined;
     }
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && !hasTriggered.current) {
-            hasTriggered.current = true;
-            playZoneIntro();
-            observer.unobserve(container);
-          }
-        });
-      },
-      { threshold: 0.2 }
-    );
-
-    observer.observe(container);
-    return () => observer.disconnect();
+    return undefined;
   }, [layout, calibrationMode]);
 
-  // When the camera arrives at this station (active=true), trigger the intro once.
-  // This bypasses IntersectionObserver, which doesn't detect CSS-transformed positions.
+  // The active prop is canonical. Skip the first passive effect so inactive
+  // zones never play their enter animation while the hero is mounting.
   useEffect(() => {
+    if (calibrationMode) return;
+
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      return;
+    }
+
     if (active && !hasTriggered.current && playIntroRef.current) {
       hasTriggered.current = true;
       playIntroRef.current();
+    } else if (!active) {
+      hasTriggered.current = false;
+      resetZoneRef.current?.();
     }
-  }, [active]);
+  }, [active, calibrationMode]);
 
   return (
     <div
@@ -243,13 +244,13 @@ export function ProjectZone({ id, title, top, left, layout, imageSrc, active }: 
       {/* The Detail Circle (Elevates to Z=400) */}
       <div
         ref={circleRef}
-        className="absolute h-[clamp(180px,31vw,300px)] w-[clamp(180px,31vw,300px)] rounded-full border-[3px] border-blue-500 bg-slate-900/90 backdrop-blur-md shadow-[0_20px_50px_rgba(0,0,0,0.5),0_0_40px_rgba(59,130,246,0.3),inset_0_0_20px_rgba(59,130,246,0.2)] pointer-events-auto flex items-center justify-center flex-col opacity-0 group"
+        className="absolute h-[clamp(34px,5.7vw,50px)] w-[clamp(34px,5.7vw,50px)] rounded-full border-[0.5px] border-blue-500 bg-slate-900/90 backdrop-blur-[0.5px] shadow-[0_4px_10px_rgba(0,0,0,0.5),0_0_8px_rgba(59,130,246,0.3),inset_0_0_4px_rgba(59,130,246,0.2)] pointer-events-auto flex items-center justify-center flex-col opacity-0 group"
         style={{ ...layout.circleStyle, transformStyle: 'preserve-3d' }}
         data-zone-circle={id}
       >
         {/* Inner rings for technical aesthetic */}
-        <div className="absolute inset-2 rounded-full border border-blue-500/40 border-dashed animate-[spin_60s_linear_infinite]" />
-        <div className="absolute inset-4 rounded-full border border-blue-500/20" />
+        <div className="absolute inset-1 rounded-full border-[0.5px] border-blue-500/40 border-dashed animate-[spin_60s_linear_infinite]" />
+        <div className="absolute inset-2 rounded-full border-[0.5px] border-blue-500/20" />
 
         {/* Diagonal hashing pattern background */}
         <div className="absolute inset-0 rounded-full opacity-10" 
@@ -262,11 +263,11 @@ export function ProjectZone({ id, title, top, left, layout, imageSrc, active }: 
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-full h-px bg-blue-500/30" />
           <div className="h-full w-px bg-blue-500/30 absolute" />
-          <div className="w-8 h-8 border border-blue-500/50 rounded-full" />
+          <div className="w-2 h-2 border-[0.5px] border-blue-500/50 rounded-full" />
         </div>
 
         {/* Project Image */}
-        <div ref={textRef} className="z-10 opacity-0 absolute inset-6 rounded-full overflow-hidden border border-blue-500/30">
+        <div ref={textRef} className="z-10 opacity-0 absolute inset-1.5 rounded-full overflow-hidden border-[0.5px] border-blue-500/30">
           {imageSrc ? (
             <img
               src={imageSrc}
@@ -274,7 +275,7 @@ export function ProjectZone({ id, title, top, left, layout, imageSrc, active }: 
               className="w-full h-full object-cover mix-blend-luminosity opacity-80 scale-105 group-hover:scale-100 transition-transform duration-700"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-blue-400/80 font-mono text-sm tracking-[0.2em] bg-slate-900/50 border border-blue-500/20">
+            <div className="w-full h-full flex items-center justify-center text-blue-400/80 font-mono text-[2px] tracking-[0.2em] bg-slate-900/50 border-[0.5px] border-blue-500/20">
               CAD_SPIN_RENDER.mp4
             </div>
           )}
@@ -283,19 +284,19 @@ export function ProjectZone({ id, title, top, left, layout, imageSrc, active }: 
         {/* Label Box (attached to circle, so it also floats at Z=400) */}
         <div 
           ref={labelRef}
-          className="absolute opacity-0 -bottom-8 bg-slate-900/95 backdrop-blur-sm border-2 border-blue-500 px-6 py-3 shadow-[0_10px_30px_rgba(0,0,0,0.5),0_0_20px_rgba(59,130,246,0.3)] flex flex-row items-center gap-4 whitespace-nowrap group-hover:-translate-y-2 group-hover:scale-105 transition-all duration-300 ease-out"
+          className="absolute opacity-0 bottom-1 bg-slate-900/95 backdrop-blur-[0.5px] border-[0.5px] border-blue-500 px-1 py-0.5 shadow-[0_2px_6px_rgba(0,0,0,0.5),0_0_4px_rgba(59,130,246,0.3)] flex flex-row items-center gap-0.5 whitespace-nowrap group-hover:-translate-y-0.5 group-hover:scale-105 transition-all duration-300 ease-out"
           style={{ transformStyle: 'preserve-3d' }}
           data-zone-label={id}
         >
-          <div className="flex items-center justify-center bg-blue-500 text-slate-900 font-mono font-bold text-lg h-8 min-w-[32px] rounded-sm">
+          <div className="flex items-center justify-center bg-blue-500 text-slate-900 font-mono font-bold text-[1.5px] h-1.5 min-w-1.5 rounded-[1px]">
             {id}
           </div>
-          <div className="text-slate-100 font-mono text-[14px] font-bold tracking-widest uppercase">
+          <div className="text-slate-100 font-mono text-[1.55px] font-bold tracking-widest uppercase">
             {title}
           </div>
           {/* Decorative corner accents */}
-          <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-blue-300" />
-          <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-blue-300" />
+          <div className="absolute top-0 left-0 w-1 h-1 border-t-[0.5px] border-l-[0.5px] border-blue-300" />
+          <div className="absolute bottom-0 right-0 w-1 h-1 border-b-[0.5px] border-r-[0.5px] border-blue-300" />
         </div>
       </div>
     </div>
