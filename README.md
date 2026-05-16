@@ -1,139 +1,112 @@
-/btw use th imp# Mark Hintz Portfolio — `scroll-driven-engineering-drawing`
+# Mark Hintz Portfolio — Spatial Engineering Drawing
 
-**Design + Manufacturing Bridge**
+This worktree contains the experimental drawing-package route for Mark Hintz's manufacturing-first portfolio.
 
-A scroll-driven, 3D perspective engineering drawing portfolio built on React + Vite + GSAP. The drawing lies on a virtual XZ floor plane; the camera pans cinematic whip-pan routes across the CAD substrate and tilts into a 3/4 overhead perspective at each `ProjectZone` station.
+The current direction is a **paper desk projection diorama**: a native engineering drawing lies on a physical-looking drafting desk, the viewport acts as a fixed inspection camera, and active project details project upward from the 2D drawing into crisp screen-space media and metadata.
 
----
+## Current Route
 
-## 🤖 For AI Agents — READ THIS FIRST
-
-> **If you are an AI agent starting a session in this worktree, this section is mandatory reading before touching any code.**
-
-### 1. Read `.continue-here.md` — Your Session Briefing
-
-Before anything else, open:
-
-```
-.continue-here.md
+```text
+http://127.0.0.1:5174/Mark_Hintz-Portfolio-v2/drawing-package
 ```
 
-This file is the **authoritative current state** of the project: what's done, what's next, all critical coordinates and geometry constants, and the exact `next_action` to start with. It is updated multiple times per session.
+The `/drawing-package` route is standalone. It should not show the normal portfolio navbar, theme toggle, or homepage sections.
 
-### 2. Read the Living Context Protocol — The Station Map
-
-The current implementation plan and station map lives at:
-
-```
-docs/plans/2026-05-07-3d-perspective-floor-plane.md
-```
-
-This is the **source of truth** for:
-
-- All `ProjectZone` station coordinates (`left`, `top` on substrate; `x`, `y`, `scale`, `rotateX` for GSAP)
-- CSS 3D geometry constraints (perspective depth, max safe substrate Y, rotateX limits)
-- The completion checklist (task-by-task with commit hashes)
-- Design decisions that must not be reversed without understanding the rationale
-
-### 3. Read the Most Recent Session Handoff
-
-Session handoffs live in `docs/plans/` and follow the naming pattern `YYYY-MM-DD-*-handoff.md`. The most recent one as of 2026-05-09 is:
-
-```
-docs/plans/2026-05-09-spatial-rig-audit-fixes-handoff.md
-```
-
-Handoffs document: what was built, what bugs were found and how they were fixed, the exact state of key files after the session, and concrete "next session" directions.
-
----
-
-## ⚠️ Doc Update Protocol — This Is Not Optional
-
-**Docs go stale fast.** Stale docs cause the next agent to re-do work, re-discover bugs, or break working geometry. Follow this protocol every session:
-
-| Trigger                          | Action                                                                                                                                                       |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Start of session                 | Read `.continue-here.md`, the living context plan, and the most recent handoff                                                                               |
-| After any GSAP coordinate change | Update the station map table in `2026-05-07-3d-perspective-floor-plane.md`                                                                                   |
-| After any architectural decision | Add it to the "Design Decisions Made" section of the active handoff                                                                                          |
-| After completing a task          | Update the checklist in `2026-05-07-3d-perspective-floor-plane.md`, update `.continue-here.md`                                                               |
-| Mid-session (every ~45 min)      | Update `.continue-here.md` with current state                                                                                                                |
-| End of session                   | Write a new `docs/plans/YYYY-MM-DD-*-handoff.md` summarizing what was done and what comes next, update `.continue-here.md` to "complete" or hand off clearly |
-
-> **Rule of thumb:** If you changed something that the _next agent_ would need to know to start without confusion, write it down before your session ends. Updating docs takes 5 minutes. Re-debugging a geometry bug takes an hour.
-
----
-
-## 📁 Project Structure
-
-```
-.continue-here.md               ← READ FIRST — current state + next action
-AGENTS.md                       ← Agent rules and skill context (auto-loaded)
-PRODUCT.md                      ← Product identity for impeccable skill
-docs/
-  plans/
-    2026-05-07-3d-perspective-floor-plane.md   ← Living context: station map, task checklist
-    2026-05-09-spatial-rig-audit-fixes-handoff.md ← Most recent session handoff
-    prompt-recent/                             ← Archived prompt history
-src/
-  components/
-    drawing-package/
-      DrawingPackagePage.tsx     ← Main GSAP camera engine + substrate + DOF blur
-      ProjectZone.tsx            ← Spatial station component (lift, label, IntersectionObserver)
-public/
-  assets/images/                 ← SVG engineering drawing assets
-remotion/                        ← Remotion showreel studio (separate npm context)
-```
-
----
-
-## 🚀 Quick Start
-
-### Portfolio Website (React + Vite)
+## Quick Start
 
 ```bash
 npm install
 npm run dev
 ```
 
-**Dev URL:** `http://localhost:5174/Mark_Hintz-Portfolio-v2/drawing-package`
+The dev script opens the drawing-package route on port `5174` so it can coexist with other local portfolio checkouts.
 
-> This worktree runs on port `5174` to coexist with the main branch on `5173`.
-
-### Remotion Showreel Studio
+Useful verification:
 
 ```bash
-cd remotion && npm run studio
+npm run build
 ```
 
-**Studio URL:** `http://localhost:3333`
+For visual checks, use Playwright or Chrome DevTools. The native agent browser has been unreliable for this worktree.
 
----
+## What This Experience Is
 
-## 🛠 Tech Stack
+- A full-screen spatial portfolio route built with Vite, React, TypeScript, GSAP, and Tailwind CSS.
+- An event-driven camera state machine controlled by wheel, keyboard, and touch input.
+- A native SVG substrate, `Lower Receiver_Final.svg`, rendered as ink on paper.
+- A screen-space station projection overlay that keeps detail media and text crisp.
+- A mechanical-first portfolio surface, not a generic developer landing page.
 
-| Layer       | Technology                                                                  |
-| ----------- | --------------------------------------------------------------------------- |
-| Framework   | React 19, TypeScript, Vite                                                  |
-| Animation   | GSAP + ScrollTrigger                                                        |
-| 3D          | CSS `perspective` / `preserve-3d` / `rotateX` (no Three.js on drawing page) |
-| Styling     | Tailwind CSS v4                                                             |
-| Calibration | Playwright (Node scripts for scroll-and-screenshot iteration)               |
-| Video       | Remotion                                                                    |
+## What This Experience Is Not
 
----
+- Not a regular vertical scrolling page.
+- Not a ScrollTrigger scrub timeline.
+- Not a black-background HUD with white CAD lines.
+- Not a Remotion-driven UI.
+- Not a Three.js scene for the interactive drawing-package route.
+- Not a SaaS/card-grid portfolio template.
 
-## 🗺 Current Station Map (as of 2026-05-09)
+## Core Files
 
-| Station | id    | Title                | Substrate pos               | GSAP camera stop                                                                                           |
-| ------- | ----- | -------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| A       | `"A"` | TRIGGER GUARD RADIUS | `left: 1450px, top: 3200px` | `x=-1400, y=-3730, scale=1.2, rotateX=0` _(start)_                                                         |
-| B       | `"B"` | BUFFER TUBE SOCKET   | `left: 5567px, top: 833px`  | `x=-6320 + 0.495*(vw - 975), y=-740 + 0.47*(vh - 550), scale=1.2, rotateX=35` _(viewport-aware tilt stop)_ |
+```text
+.continue-here.md
+AGENTS.md
+DESIGN.md
+PRODUCT.md
+memory/PRD.md
+src/App.tsx
+src/components/drawing-package/DrawingPackagePage.tsx
+src/components/drawing-package/ProjectZone.tsx
+src/components/drawing-package/TitleBlockStation.tsx
+src/styles/drawing-package.css
+public/assets/images/Lower Receiver_Final.svg
+```
 
-**Key geometry constants:**
+## Architecture Summary
 
-- `perspective: 4000px` on container (never lower — content goes past focal plane)
-- `rotateX: 35°` at final stop (was 62° — caused invisible content bug)
-- Max safe substrate Y at `scale: 1.2`: `4000 / (sin(35°) × 1.2) ≈ 5806px`
+`DrawingPackagePage.tsx` owns the GSAP camera state machine, station order, substrate rendering, hero, station progress, and `StationProjectionOverlay`.
 
-> Always verify the station map in `docs/plans/2026-05-07-3d-perspective-floor-plane.md` for the most current values — that file wins over this README if they disagree.
+`ProjectZone.tsx` owns the substrate-space station origin. In `projectionMode`, it preserves the 2D origin behavior while hiding the old pixelated substrate-space detail circle and label.
+
+`drawing-package.css` owns the paper/desk environment, projection beam, lifted detail object, metadata plate, and route-level visual system.
+
+The current station-detail model is intentionally split:
+
+- **Substrate layer:** map, anchor points, title block, camera motion.
+- **Projection layer:** readable media, text, leader/beam, lifted detail object.
+
+This split is the fix for the earlier pixelation issue caused by magnifying tiny substrate-space text and media through CSS transforms.
+
+## Current Substrate And Camera
+
+- Asset: `public/assets/images/Lower Receiver_Final.svg`.
+- Native viewBox: `1625 × 1075`.
+- Render scale: `RENDER_SCALE = 2`.
+- Camera stops are authored in substrate-native coordinates and converted through `computeStop(target, vw, vh)`.
+- Navigation is event-driven with wheel accumulation and post-transition quiet windows to prevent trackpad overshoot.
+
+Current camera targets live in `DrawingPackagePage.tsx` and are mirrored in `.continue-here.md` and `AGENTS.md` when they change.
+
+## Documentation Rules
+
+To reduce session-to-session doc churn:
+
+- Read `.continue-here.md` first every session. It is the current checkpoint and exact next-action file.
+- Read `PRODUCT.md`, `DESIGN.md`, and `AGENTS.md` before substantial product or UI work.
+- Update `.continue-here.md` whenever the session state or next action changes.
+- Update `AGENTS.md` and `DESIGN.md` only when architecture, coordinates, or visual-system decisions change.
+- Update `memory/PRD.md`, `README.md`, and `PRODUCT.md` only when the project direction, goals, or stable architecture change.
+
+Do not create a new handoff document by default. Prefer keeping `.continue-here.md` current unless the user explicitly asks for a dated handoff or a major branch handoff is needed.
+
+## Current Next Work
+
+The current checkpoint is in `.continue-here.md`. At the time of this README update, the next work is:
+
+- Verify and tune the paper projection overlay on Stations B/C/D and mobile.
+- Resume Phase 4 prune after projection placement is acceptable.
+- Preserve `Lower Receiver_Final.svg` and the station projection images currently used by the live route.
+
+## Remotion Boundary
+
+The `remotion/` workspace is separate and may be used for offline showreel or station media renders. Remotion must not drive `/drawing-package` navigation, DOM rendering, or interactive UI.

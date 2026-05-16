@@ -26,7 +26,7 @@ S85 Caveman mode activated. User requested terse, direct communication style. (M
 
 **Role:** Senior Creative Technologist and GSAP Architect.
 
-**Architecture:** The drawing package page is a standalone pinned spatial web route, not a normal vertical page. The viewport is the camera. Wheel, key, and touch input step an event-driven GSAP state machine between authored camera stops while the native SVG substrate translates, scales, and tilts underneath. Substrate stations are absolute React components on the `1625×1075` map; `ProjectZone` now acts as the active 2D origin marker in `projectionMode`, while readable station media/text is rendered by a fixed screen-space `StationProjectionOverlay` so it stays crisp and appears projected out of the paper drawing.
+**Architecture:** The drawing package page is a standalone pinned spatial web route, not a normal vertical page. The viewport is the camera. Wheel, key, and touch input step an event-driven GSAP state machine between authored camera stops while the native SVG substrate translates, scales, and tilts underneath. Substrate stations are absolute React components on the `1625×1075` map; `ProjectZone` acts as the pure 2D origin marker, while readable station media/text is rendered by a fixed screen-space `StationProjectionOverlay` so it stays crisp and appears projected out of the paper drawing.
 
 **Rules:**
 - Keep the viewport pinned; move the substrate, not the user.
@@ -72,12 +72,12 @@ All camera stops are authored as substrate-native targets and converted through 
 
 #### ProjectZone map
 
-| Station | title | top | left | anchor | circle | circleScale |
-|---|---|---:|---:|---|---|---|
-| A | `ARMAMENT COMPONENTS & RECEIVER SYSTEMS` | `278px` | `0px` | `(291,250)` | `top 235px, left 285px` | `{ x: 1.01, y: 1.02 }` |
-| B | `INDUSTRIAL TORQUE WRENCH` | `0px` | `748px` | `(300,134)` | `top 150px, left 285px` | `{ x: 1, y: 1.15 }` |
-| C | `PUMP PACKAGE DESIGN SYSTEM` | `442px` | `378px` | `(300,250)` | `top 240px, left 285px` | `{ x: 1, y: 1 }` |
-| D | `RENDERINGS & VISUALIZATIONS` | `411px` | `988px` | `(300,250)` | `top 245px, left 285px` | `{ x: 0.91, y: 0.93 }` |
+| Station | title | top | left | anchor |
+|---|---|---:|---:|---|
+| A | `ARMAMENT COMPONENTS & RECEIVER SYSTEMS` | `278px` | `0px` | `(291,250)` |
+| B | `INDUSTRIAL TORQUE WRENCH` | `0px` | `748px` | `(300,134)` |
+| C | `PUMP PACKAGE DESIGN SYSTEM` | `442px` | `378px` | `(300,250)` |
+| D | `RENDERINGS & VISUALIZATIONS` | `411px` | `988px` | `(300,250)` |
 
 #### Title block
 
@@ -101,10 +101,10 @@ All camera stops are authored as substrate-native targets and converted through 
 - Event-driven wheel/key/touch camera is canonical. Wheel input uses an accumulator threshold and post-transition quiet window so one physical gesture advances one station.
 - The native SVG substrate and oversampled render path are the current sharpness baseline. Preserve `Lower Receiver_Final.svg` and `RENDER_SCALE = 2` unless a verified browser pass proves a better replacement.
 - `ProjectZone` `active` is the canonical trigger. `TitleBlockStation` follows the same pattern.
-- ProjectZone detail circles are intentionally equalized in screen size across A/B/C/D, with station-specific `circleScale` compensation to counter perspective distortion.
 - New active station detail UI belongs in `StationProjectionOverlay`, not inside the zoomed substrate. This is the current fix for pixelated station text/media.
 - Projection contract: show a 2D origin ring on the drawing, a visible vertical leader/beam, and a lifted circular object/metadata plate that feels projected from the paper into 3D space.
-- `ProjectZone projectionMode` hides the legacy substrate-space detail circle/media/label while preserving active origin behavior.
+- Legacy substrate-space detail circles, media, and labels have been pruned. `ProjectZone` is now a pure layout anchor.
+- The projection UI overlays are gated by `isAtRest` camera state tracking so they only reveal after the cinematic whip-pan concludes.
 - Station-specific projection images are currently `Billet Receiver Set AR15.webp`, `torque-wrench-03.webp`, `pump-package-04.webp`, and `rendering-06.webp`.
 - Hidden calibration mode exists at `?calibrate=1`; it forces overlays visible and outlines each station box for solving.
 - `useLayoutEffect` remains mandatory for GSAP initial state to avoid refresh flashes.
@@ -112,6 +112,6 @@ All camera stops are authored as substrate-native targets and converted through 
 
 ### Next Implementation Tasks
 
-1. Verify and tune `StationProjectionOverlay` on Stations B/C/D plus mobile, while preserving calibrated station camera targets.
-2. Phase 4 prune, removing dead duplicate substrates and remaining legacy ProjectZone detail-circle decorations that projection mode makes obsolete.
+1. Delete dead/duplicate background SVG assets from the repository to reduce bloat.
+2. Wire up the hero word-cycle animations (convert from React interval to CSS keyframes).
 3. Hook the Drawing Package page into the main portfolio navigation only after the standalone route stays visually stable.

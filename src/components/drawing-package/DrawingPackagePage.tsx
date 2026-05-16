@@ -71,28 +71,16 @@ const STATIONS: Target[] = [
 // to zone origin).  These are starting values — Phase 3 calibration
 // will tune them visually.
 const STATION_A_LAYOUT: ProjectZoneLayout = {
-  pathD: '',
   anchor: { x: 291, y: 250 },
-  circleStyle: { position: 'absolute', top: '235px', left: '285px' },
-  circleScale: { x: 1.01, y: 1.02 },
 };
 const STATION_B_LAYOUT: ProjectZoneLayout = {
-  pathD: '',
   anchor: { x: 300, y: 134 },
-  circleStyle: { position: 'absolute', top: '150px', left: '285px' },
-  circleScale: { x: 1, y: 1.15 },
 };
 const STATION_C_LAYOUT: ProjectZoneLayout = {
-  pathD: '',
   anchor: { x: 300, y: 250 },
-  circleStyle: { position: 'absolute', top: '240px', left: '285px' },
-  circleScale: { x: 1, y: 1 },
 };
 const STATION_D_LAYOUT: ProjectZoneLayout = {
-  pathD: '',
   anchor: { x: 300, y: 250 },
-  circleStyle: { position: 'absolute', top: '245px', left: '285px' },
-  circleScale: { x: 0.91, y: 0.93 },
 };
 
 const PROJECT_STATION_DETAILS = [
@@ -161,15 +149,34 @@ function StationProjectionOverlay({
 }: {
   station: (typeof PROJECT_STATION_DETAILS)[number];
 }) {
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    let rafId: number;
+    const updatePosition = () => {
+      if (!overlayRef.current) return;
+      const dot = document.querySelector(`[data-zone-anchor="${station.id}"] circle`);
+      if (dot) {
+        const rect = dot.getBoundingClientRect();
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
+        overlayRef.current.style.setProperty('--origin-x', `${x}px`);
+        overlayRef.current.style.setProperty('--origin-y', `${y}px`);
+      }
+      rafId = requestAnimationFrame(updatePosition);
+    };
+    rafId = requestAnimationFrame(updatePosition);
+    return () => cancelAnimationFrame(rafId);
+  }, [station.id]);
+
   const imageSrc = `${import.meta.env.BASE_URL}assets/images/${station.image}`;
 
   return (
-    <div className="station-projection" key={station.id} aria-hidden="true">
+    <div ref={overlayRef} className="station-projection" key={station.id} aria-hidden="true">
       <div className="station-projection__origin">
         <div className="station-projection__origin-pulse" />
       </div>
       <div className="station-projection__beam" />
-      <div className="station-projection__leader" />
       <div className="station-projection__object">
         <div className="station-projection__shadow" />
         <div className="station-projection__rim">
@@ -181,12 +188,18 @@ function StationProjectionOverlay({
           <div className="station-projection__scan" />
         </div>
       </div>
-      <div className="station-projection__plate">
-        <span className="station-projection__id">{station.id}</span>
-        <span className="station-projection__label">{station.label}</span>
-        <strong>{station.title}</strong>
-        <span>{station.meta}</span>
-      </div>
+      <ul className="station-projection__text-list">
+        <li style={{ '--delay': '0ms' } as React.CSSProperties}>
+          <strong style={{ color: 'var(--dp-accent)' }}>{station.id}</strong>
+          <span style={{ letterSpacing: '0.12em' }}>{station.title}</span>
+        </li>
+        <li style={{ '--delay': '120ms' } as React.CSSProperties}>
+          <span style={{ color: 'var(--dp-text-dim)', letterSpacing: '0.18em' }}>{station.label}</span>
+        </li>
+        <li style={{ '--delay': '240ms' } as React.CSSProperties}>
+          <span style={{ color: 'var(--dp-text-dim)', letterSpacing: '0.18em' }}>{station.meta}</span>
+        </li>
+      </ul>
     </div>
   );
 }
@@ -200,6 +213,7 @@ export function DrawingPackagePage() {
   const [currentWord, setCurrentWord] = useState(0);
   // -1 = hero, 0..STATIONS.length-1 = each station
   const [activeStation, setActiveStation] = useState<number>(-1);
+  const [isAtRest, setIsAtRest] = useState<boolean>(false);
 
   // ── Hero word cycle (independent of GSAP) ──────────────────────────
   useEffect(() => {
@@ -375,6 +389,7 @@ export function DrawingPackagePage() {
         const prevIdx = currentIdx;
         setStation(nextIdx);
         isTransitioning = true;
+        setIsAtRest(false);
 
         // Kill anything in flight on these targets before starting new tween
         gsap.killTweensOf([substrateRef.current, bgLayerRef.current, heroTextRef.current]);
@@ -400,6 +415,7 @@ export function DrawingPackagePage() {
 
         tl.eventCallback('onComplete', () => {
           isTransitioning = false;
+          setIsAtRest(true);
           // Lock wheel for a quiet period after transition to absorb trailing inertia
           wheelLockedUntil = performance.now() + 900;
           if (bufferedKeyDir !== null) {
@@ -413,6 +429,7 @@ export function DrawingPackagePage() {
       // When the intro completes, unlock input.
       introTl.eventCallback('onComplete', () => {
         isTransitioning = false;
+        setIsAtRest(true);
         wheelLockedUntil = performance.now() + 900;
         if (bufferedKeyDir !== null) {
           const d = bufferedKeyDir;
@@ -605,7 +622,7 @@ export function DrawingPackagePage() {
         </div>
       </div>
 
-      {activeProjectionStation ? (
+      {isAtRest && activeProjectionStation ? (
         <StationProjectionOverlay
           station={activeProjectionStation}
         />
@@ -632,47 +649,31 @@ export function DrawingPackagePage() {
 
         <ProjectZone
           id="A"
-          title="ARMAMENT COMPONENTS & RECEIVER SYSTEMS"
           top="278px"
           left="0px"
           layout={STATION_A_LAYOUT}
-          videoSrc={`${import.meta.env.BASE_URL}assets/video/engineering-review-loop.mp4`}
-          cameraRotateX={STATIONS[0].rotateX}
-          projectionMode
-          active={activeStation === 0}
+          active={activeStation === 0 && isAtRest}
         />
         <ProjectZone
           id="B"
-          title="INDUSTRIAL TORQUE WRENCH"
           top="0px"
           left="748px"
           layout={STATION_B_LAYOUT}
-          videoSrc={`${import.meta.env.BASE_URL}assets/video/engineering-review-loop.mp4`}
-          cameraRotateX={STATIONS[1].rotateX}
-          projectionMode
-          active={activeStation === 1}
+          active={activeStation === 1 && isAtRest}
         />
         <ProjectZone
           id="C"
-          title="PUMP PACKAGE DESIGN SYSTEM"
           top="442px"
           left="378px"
           layout={STATION_C_LAYOUT}
-          videoSrc={`${import.meta.env.BASE_URL}assets/video/engineering-review-loop.mp4`}
-          cameraRotateX={STATIONS[2].rotateX}
-          projectionMode
-          active={activeStation === 2}
+          active={activeStation === 2 && isAtRest}
         />
         <ProjectZone
           id="D"
-          title="RENDERINGS & VISUALIZATIONS"
           top="411px"
           left="988px"
           layout={STATION_D_LAYOUT}
-          videoSrc={`${import.meta.env.BASE_URL}assets/video/engineering-review-loop.mp4`}
-          cameraRotateX={STATIONS[3].rotateX}
-          projectionMode
-          active={activeStation === 3}
+          active={activeStation === 3 && isAtRest}
         />
 
         {/* Hero text — pinned on substrate, counter-tilted to face the camera.

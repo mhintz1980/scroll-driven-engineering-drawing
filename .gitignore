@@ -25,6 +25,7 @@ dist-ssr
 node_modules
 .playwright-mcp/
 -e 
+skills/
 # Environment and credential files
 .env
 .env.*
