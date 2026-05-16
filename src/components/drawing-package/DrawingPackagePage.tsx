@@ -19,6 +19,11 @@ const SUBSTRATE_W = 1625;
 const SUBSTRATE_H = 1075;
 const SUBSTRATE_ASSET = 'Lower Receiver_Final.svg';
 const SUBSTRATE_NEEDS_INVERT = false;
+// Render the SVG at RENDER_SCALE × native dimensions so the GPU has
+// more pixels before CSS 3D transforms magnify the raster.
+// The img is counter-scaled by 1/RENDER_SCALE to fit the 1625×1075
+// substrate container. Camera math stays unchanged.
+const RENDER_SCALE = 2;
 // Migration scale factors (old 8800×6800 → native 1625×1075):
 //   X_SCALE = 5.415,  Y_SCALE = 6.326
 
@@ -69,21 +74,25 @@ const STATION_A_LAYOUT: ProjectZoneLayout = {
   pathD: '',
   anchor: { x: 291, y: 250 },
   circleStyle: { position: 'absolute', top: '235px', left: '285px' },
+  circleScale: { x: 1.01, y: 1.02 },
 };
 const STATION_B_LAYOUT: ProjectZoneLayout = {
   pathD: '',
   anchor: { x: 300, y: 134 },
   circleStyle: { position: 'absolute', top: '150px', left: '285px' },
+  circleScale: { x: 1, y: 1.15 },
 };
 const STATION_C_LAYOUT: ProjectZoneLayout = {
   pathD: '',
   anchor: { x: 300, y: 250 },
   circleStyle: { position: 'absolute', top: '240px', left: '285px' },
+  circleScale: { x: 1, y: 1 },
 };
 const STATION_D_LAYOUT: ProjectZoneLayout = {
   pathD: '',
   anchor: { x: 300, y: 250 },
   circleStyle: { position: 'absolute', top: '245px', left: '285px' },
+  circleScale: { x: 0.91, y: 0.93 },
 };
 
 // ── Camera math ──────────────────────────────────────────────────────
@@ -91,11 +100,10 @@ type Stop = { x: number; y: number; scale: number; rotateX: number };
 
 function computeScale(t: Target, vw: number, vh: number): number {
   if (t.scale === 'wide') {
-    return Math.max(0.10, Math.min(vw * 0.88 / SUBSTRATE_W, vh * 0.88 / SUBSTRATE_H));
+    // Increased from 0.88 to 1.1 so it fills more of the screen and is less zoomed out
+    return Math.max(0.10, Math.min(vw * 1.1 / SUBSTRATE_W, vh * 1.1 / SUBSTRATE_H));
   }
   if (t.scale === 'hero') {
-    // Retained for future close-up hero experiments. Current HERO uses 'wide'
-    // so the opening state shows the complete drawing overview.
     return Math.min(vw * 0.40 / 295, vh * 0.38 / 89, 2.82);
   }
   return t.scale;
@@ -147,7 +155,7 @@ export function DrawingPackagePage() {
     // because they must be read synchronously from event handlers.
     let currentIdx = -1;
     let isTransitioning = true;          // intro starts immediately
-    let bufferedDir: 1 | -1 | null = null;
+    let bufferedKeyDir: 1 | -1 | null = null;
 
     const setStation = (idx: number) => {
       currentIdx = idx;
@@ -291,10 +299,11 @@ export function DrawingPackagePage() {
       };
 
       // ─── State-machine controller ────────────────────────────────
-      const advance = (dir: 1 | -1) => {
+      const advance = (dir: 1 | -1, source: 'wheel' | 'key' | 'touch' = 'key') => {
         if (isTransitioning) {
-          // Buffer at most ONE input — overwrite any previous buffer.
-          bufferedDir = dir;
+          // Only keyboard input is buffered during transitions.
+          // Wheel and touch are swallowed to prevent trackpad inertia overshoot.
+          if (source === 'key') bufferedKeyDir = dir;
           return;
         }
         const nextIdx = currentIdx + dir;
@@ -328,10 +337,12 @@ export function DrawingPackagePage() {
 
         tl.eventCallback('onComplete', () => {
           isTransitioning = false;
-          if (bufferedDir !== null) {
-            const d = bufferedDir;
-            bufferedDir = null;
-            advance(d);
+          // Lock wheel for a quiet period after transition to absorb trailing inertia
+          wheelLockedUntil = performance.now() + 900;
+          if (bufferedKeyDir !== null) {
+            const d = bufferedKeyDir;
+            bufferedKeyDir = null;
+            advance(d, 'key');
           }
         });
       };
@@ -339,10 +350,11 @@ export function DrawingPackagePage() {
       // When the intro completes, unlock input.
       introTl.eventCallback('onComplete', () => {
         isTransitioning = false;
-        if (bufferedDir !== null) {
-          const d = bufferedDir;
-          bufferedDir = null;
-          advance(d);
+        wheelLockedUntil = performance.now() + 900;
+        if (bufferedKeyDir !== null) {
+          const d = bufferedKeyDir;
+          bufferedKeyDir = null;
+          advance(d, 'key');
         }
       });
 
@@ -351,22 +363,49 @@ export function DrawingPackagePage() {
       // flick — collapse those into a single advance. We open a fresh
       // cooldown window each time we see fresh strong wheel motion.
       let wheelCooldownUntil = 0;
+      let wheelLockedUntil = 0;
+      let wheelAccumulator = 0;
+      let lastWheelTime = 0;
+
       const onWheel = (e: WheelEvent) => {
         e.preventDefault();
-        if (Math.abs(e.deltaY) < 8) return;          // ignore micro-deltas
         const now = performance.now();
-        if (now < wheelCooldownUntil) return;
-        wheelCooldownUntil = now + 380;              // 380ms input lockout
-        advance(e.deltaY > 0 ? 1 : -1);
+
+        // Reset accumulator if it's been a while since the last wheel event
+        if (now - lastWheelTime > 150) {
+          wheelAccumulator = 0;
+        }
+        lastWheelTime = now;
+
+        if (isTransitioning) {
+          wheelAccumulator = 0;
+          return; // swallow wheel during transitions
+        }
+        
+        if (now < wheelLockedUntil || now < wheelCooldownUntil) {
+          wheelAccumulator = 0;
+          return;
+        }
+
+        if (Math.abs(e.deltaY) < 8) return; // ignore micro-deltas
+
+        wheelAccumulator += e.deltaY;
+
+        if (Math.abs(wheelAccumulator) > 50) {
+          wheelCooldownUntil = now + 400; // 400ms input lockout after triggering
+          const dir = wheelAccumulator > 0 ? 1 : -1;
+          wheelAccumulator = 0;
+          advance(dir, 'wheel');
+        }
       };
 
       const onKey = (e: KeyboardEvent) => {
         if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ' || e.key === 'Enter') {
           e.preventDefault();
-          advance(1);
+          advance(1, 'key');
         } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
           e.preventDefault();
-          advance(-1);
+          advance(-1, 'key');
         }
       };
 
@@ -375,7 +414,7 @@ export function DrawingPackagePage() {
       const onTouchStart = (e: TouchEvent) => { touchStartY = e.touches[0].clientY; };
       const onTouchEnd = (e: TouchEvent) => {
         const dy = touchStartY - e.changedTouches[0].clientY;
-        if (Math.abs(dy) > 40) advance(dy > 0 ? 1 : -1);
+        if (Math.abs(dy) > 40) advance(dy > 0 ? 1 : -1, 'touch');
       };
 
       // Resize: recompute and SNAP to current target (no animation).
@@ -413,8 +452,11 @@ export function DrawingPackagePage() {
   // Build the substrate filter declaratively so toggling SUBSTRATE_NEEDS_INVERT
   // re-renders the bg layer correctly.
   const substrateImgStyle: React.CSSProperties = {
-    width: `${SUBSTRATE_W}px`,
-    height: `${SUBSTRATE_H}px`,
+    width: `${SUBSTRATE_W * RENDER_SCALE}px`,
+    height: `${SUBSTRATE_H * RENDER_SCALE}px`,
+    maxWidth: 'none',
+    transformOrigin: '0 0',
+    transform: `scale(${1 / RENDER_SCALE})`,
     opacity: 0.9,
     ...(SUBSTRATE_NEEDS_INVERT
       ? { filter: 'invert(1)', mixBlendMode: 'screen' as const }
@@ -512,7 +554,7 @@ export function DrawingPackagePage() {
         <img
           ref={bgLayerRef}
           src={`${import.meta.env.BASE_URL}assets/images/${SUBSTRATE_ASSET}`}
-          className="absolute inset-0 pointer-events-none select-none"
+          className="absolute top-0 left-0 pointer-events-none select-none"
           style={substrateImgStyle}
           alt=""
           aria-hidden="true"
@@ -520,38 +562,42 @@ export function DrawingPackagePage() {
 
         <ProjectZone
           id="A"
-          title="TRIGGER GUARD RADIUS"
+          title="ARMAMENT COMPONENTS & RECEIVER SYSTEMS"
           top="278px"
           left="0px"
           layout={STATION_A_LAYOUT}
-          imageSrc={`${import.meta.env.BASE_URL}assets/images/torque-wrench-03.webp`}
+          videoSrc={`${import.meta.env.BASE_URL}assets/video/engineering-review-loop.mp4`}
+          cameraRotateX={STATIONS[0].rotateX}
           active={activeStation === 0}
         />
         <ProjectZone
           id="B"
-          title="BUFFER TUBE SOCKET"
+          title="INDUSTRIAL TORQUE WRENCH"
           top="0px"
           left="748px"
           layout={STATION_B_LAYOUT}
-          imageSrc={`${import.meta.env.BASE_URL}assets/images/Billet Receiver Set AR15.webp`}
+          videoSrc={`${import.meta.env.BASE_URL}assets/video/engineering-review-loop.mp4`}
+          cameraRotateX={STATIONS[1].rotateX}
           active={activeStation === 1}
         />
         <ProjectZone
           id="C"
-          title="INDUSTRIAL DEWATERING PUMP"
+          title="PUMP PACKAGE DESIGN SYSTEM"
           top="442px"
           left="378px"
           layout={STATION_C_LAYOUT}
-          imageSrc={`${import.meta.env.BASE_URL}assets/images/pump-package-04.webp`}
+          videoSrc={`${import.meta.env.BASE_URL}assets/video/engineering-review-loop.mp4`}
+          cameraRotateX={STATIONS[2].rotateX}
           active={activeStation === 2}
         />
         <ProjectZone
           id="D"
-          title="RENDERINGS"
+          title="RENDERINGS & VISUALIZATIONS"
           top="411px"
           left="988px"
           layout={STATION_D_LAYOUT}
-          imageSrc={`${import.meta.env.BASE_URL}assets/images/rendering-06.webp`}
+          videoSrc={`${import.meta.env.BASE_URL}assets/video/engineering-review-loop.mp4`}
+          cameraRotateX={STATIONS[3].rotateX}
           active={activeStation === 3}
         />
 
