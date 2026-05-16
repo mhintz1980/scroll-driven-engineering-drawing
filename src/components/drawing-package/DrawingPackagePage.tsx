@@ -18,7 +18,7 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
 const SUBSTRATE_W = 1625;
 const SUBSTRATE_H = 1075;
 const SUBSTRATE_ASSET = 'Lower Receiver_Final.svg';
-const SUBSTRATE_NEEDS_INVERT = false;
+const SUBSTRATE_BASE_FILTER = 'invert(1) contrast(1.05) saturate(0.12)';
 // Render the SVG at RENDER_SCALE × native dimensions so the GPU has
 // more pixels before CSS 3D transforms magnify the raster.
 // The img is counter-scaled by 1/RENDER_SCALE to fit the 1625×1075
@@ -95,8 +95,43 @@ const STATION_D_LAYOUT: ProjectZoneLayout = {
   circleScale: { x: 0.91, y: 0.93 },
 };
 
+const PROJECT_STATION_DETAILS = [
+  {
+    id: 'A',
+    title: 'ARMAMENT COMPONENTS & RECEIVER SYSTEMS',
+    label: 'Forged receiver datum',
+    meta: 'DFM · GD&T · Machined fit',
+    image: 'Billet Receiver Set AR15.webp',
+  },
+  {
+    id: 'B',
+    title: 'INDUSTRIAL TORQUE WRENCH',
+    label: 'Spline torque interface',
+    meta: 'Fixtures · Load path · Serviceability',
+    image: 'torque-wrench-03.webp',
+  },
+  {
+    id: 'C',
+    title: 'PUMP PACKAGE DESIGN SYSTEM',
+    label: 'Skid package layout',
+    meta: 'Routing · Assembly · Field access',
+    image: 'pump-package-04.webp',
+  },
+  {
+    id: 'D',
+    title: 'RENDERINGS & VISUALIZATIONS',
+    label: 'Review-ready visual proof',
+    meta: 'CAD render · Technical communication',
+    image: 'rendering-06.webp',
+  },
+] as const;
+
 // ── Camera math ──────────────────────────────────────────────────────
 type Stop = { x: number; y: number; scale: number; rotateX: number };
+
+function substrateFilter(px: number): string {
+  return `${SUBSTRATE_BASE_FILTER} blur(${px}px)`;
+}
 
 function computeScale(t: Target, vw: number, vh: number): number {
   if (t.scale === 'wide') {
@@ -120,6 +155,41 @@ function computeStop(t: Target, vw: number, vh: number): Stop {
 }
 
 const WORD_CYCLE = wordCycleData;
+
+function StationProjectionOverlay({
+  station,
+}: {
+  station: (typeof PROJECT_STATION_DETAILS)[number];
+}) {
+  const imageSrc = `${import.meta.env.BASE_URL}assets/images/${station.image}`;
+
+  return (
+    <div className="station-projection" key={station.id} aria-hidden="true">
+      <div className="station-projection__origin">
+        <div className="station-projection__origin-pulse" />
+      </div>
+      <div className="station-projection__beam" />
+      <div className="station-projection__leader" />
+      <div className="station-projection__object">
+        <div className="station-projection__shadow" />
+        <div className="station-projection__rim">
+          <img
+            src={imageSrc}
+            alt=""
+            className="station-projection__media"
+          />
+          <div className="station-projection__scan" />
+        </div>
+      </div>
+      <div className="station-projection__plate">
+        <span className="station-projection__id">{station.id}</span>
+        <span className="station-projection__label">{station.label}</span>
+        <strong>{station.title}</strong>
+        <span>{station.meta}</span>
+      </div>
+    </div>
+  );
+}
 
 export function DrawingPackagePage() {
   const containerRef  = useRef<HTMLDivElement>(null);
@@ -167,11 +237,7 @@ export function DrawingPackagePage() {
       const vw0 = window.innerWidth;
       const vh0 = window.innerHeight;
       gsap.set(substrateRef.current, computeStop(WIDE, vw0, vh0));
-      if (SUBSTRATE_NEEDS_INVERT) {
-        gsap.set(bgLayerRef.current, { filter: 'invert(1) blur(0px)' });
-      } else {
-        gsap.set(bgLayerRef.current, { filter: 'blur(0px)' });
-      }
+      gsap.set(bgLayerRef.current, { filter: substrateFilter(0) });
 
       const heroStop0 = computeStop(HERO, vw0, vh0);
       // Hero text counter-tilts the substrate's perspective so it stays face-on
@@ -188,9 +254,6 @@ export function DrawingPackagePage() {
       if (specEl)        gsap.set(specEl,        { opacity: 0, y: 18 });
 
       // ─── Helper: blur the substrate (focus pull) ──────────────────
-      const blurFilter = (px: number) =>
-        SUBSTRATE_NEEDS_INVERT ? `invert(1) blur(${px}px)` : `blur(${px}px)`;
-
       // ─── Intro: wide → hero, then unroll hero text ────────────────
       const introTl = gsap.timeline({ delay: 0.25 });
       introTl
@@ -246,7 +309,7 @@ export function DrawingPackagePage() {
 
         return gsap.timeline()
           .to(substrateRef.current, { rotateX: 0, duration: 0.42, ease: 'power2.in' }, FLATTEN_AT)
-          .to(bgLayerRef.current,   { filter: blurFilter(14), duration: 0.28, ease: 'power1.in' }, BLUR_AT)
+          .to(bgLayerRef.current,   { filter: substrateFilter(14), duration: 0.28, ease: 'power1.in' }, BLUR_AT)
           .to(substrateRef.current, {
             x: stop.x + dirX * overshootPx,
             y: stop.y + dirY * overshootPx * 0.65,
@@ -255,7 +318,7 @@ export function DrawingPackagePage() {
             duration: whipDuration,
             ease: 'power4.out',
           }, WHIP_AT)
-          .to(bgLayerRef.current, { filter: blurFilter(0), duration: 0.35, ease: 'power1.out' }, BLUR_CLR)
+          .to(bgLayerRef.current, { filter: substrateFilter(0), duration: 0.35, ease: 'power1.out' }, BLUR_CLR)
           .to(substrateRef.current, {
             x: stop.x, y: stop.y, scale: stop.scale, rotateX: stop.rotateX,
             duration: settleDuration, ease: 'power2.inOut',
@@ -449,24 +512,25 @@ export function DrawingPackagePage() {
   }, []);
 
   // ── Render ─────────────────────────────────────────────────────────
-  // Build the substrate filter declaratively so toggling SUBSTRATE_NEEDS_INVERT
-  // re-renders the bg layer correctly.
+  const activeProjectionStation =
+    activeStation >= 0 && activeStation < PROJECT_STATION_DETAILS.length
+      ? PROJECT_STATION_DETAILS[activeStation]
+      : null;
   const substrateImgStyle: React.CSSProperties = {
     width: `${SUBSTRATE_W * RENDER_SCALE}px`,
     height: `${SUBSTRATE_H * RENDER_SCALE}px`,
     maxWidth: 'none',
     transformOrigin: '0 0',
     transform: `scale(${1 / RENDER_SCALE})`,
-    opacity: 0.9,
-    ...(SUBSTRATE_NEEDS_INVERT
-      ? { filter: 'invert(1)', mixBlendMode: 'screen' as const }
-      : {}),
+    opacity: 0.88,
+    filter: substrateFilter(0),
+    mixBlendMode: 'multiply',
   };
 
   return (
     <div
       ref={containerRef}
-      className="drawing-package drawing-scene w-screen h-screen overflow-hidden bg-slate-950"
+      className="drawing-package drawing-scene w-screen h-screen overflow-hidden"
       style={{ perspective: '4000px', perspectiveOrigin: '50% 40%' }}
       data-testid="drawing-package-scene"
     >
@@ -541,10 +605,16 @@ export function DrawingPackagePage() {
         </div>
       </div>
 
+      {activeProjectionStation ? (
+        <StationProjectionOverlay
+          station={activeProjectionStation}
+        />
+      ) : null}
+
       {/* Substrate — the giant CAD drawing layer that the camera moves over */}
       <div
         ref={substrateRef}
-        className="origin-top-left relative"
+        className="drawing-substrate-paper origin-top-left relative"
         style={{
           width: `${SUBSTRATE_W}px`,
           height: `${SUBSTRATE_H}px`,
@@ -568,6 +638,7 @@ export function DrawingPackagePage() {
           layout={STATION_A_LAYOUT}
           videoSrc={`${import.meta.env.BASE_URL}assets/video/engineering-review-loop.mp4`}
           cameraRotateX={STATIONS[0].rotateX}
+          projectionMode
           active={activeStation === 0}
         />
         <ProjectZone
@@ -578,6 +649,7 @@ export function DrawingPackagePage() {
           layout={STATION_B_LAYOUT}
           videoSrc={`${import.meta.env.BASE_URL}assets/video/engineering-review-loop.mp4`}
           cameraRotateX={STATIONS[1].rotateX}
+          projectionMode
           active={activeStation === 1}
         />
         <ProjectZone
@@ -588,6 +660,7 @@ export function DrawingPackagePage() {
           layout={STATION_C_LAYOUT}
           videoSrc={`${import.meta.env.BASE_URL}assets/video/engineering-review-loop.mp4`}
           cameraRotateX={STATIONS[2].rotateX}
+          projectionMode
           active={activeStation === 2}
         />
         <ProjectZone
@@ -598,6 +671,7 @@ export function DrawingPackagePage() {
           layout={STATION_D_LAYOUT}
           videoSrc={`${import.meta.env.BASE_URL}assets/video/engineering-review-loop.mp4`}
           cameraRotateX={STATIONS[3].rotateX}
+          projectionMode
           active={activeStation === 3}
         />
 

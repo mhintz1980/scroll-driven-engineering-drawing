@@ -1,8 +1,11 @@
 ---
 name: Spatial Web Engineering Portfolio
-description: Native-SVG drawing package route with an event-driven camera and blueprint callouts.
+description: Native-SVG drawing package route with an event-driven camera and paper-desk projection callouts.
 colors:
   blueprint-bg: "oklch(0.12 0.02 245)"
+  desk-bg: "oklch(0.33 0.012 245)"
+  paper: "oklch(0.78 0.012 245)"
+  paper-warm: "oklch(0.84 0.018 78)"
   blueprint-surface: "oklch(0.15 0.02 245 / 0.65)"
   blueprint-border: "oklch(0.85 0.02 245 / 0.85)"
   blueprint-border-dim: "oklch(0.70 0.02 245 / 0.45)"
@@ -86,29 +89,32 @@ components:
 
 ## Overview
 
-**Creative North Star: "Blueprint Diorama"**
+**Creative North Star: "Paper Desk Projection Diorama"**
 
 This route is a full-screen spatial drawing package, not a normal vertical portfolio page. The viewport is the camera. Wheel, key, and touch input step between authored camera targets while the native `1625×1075` SVG substrate moves, scales, and tilts under a fixed viewer.
 
-The design has to read like a precision drawing pulled off a fabrication desk and turned into a cinematic inspection pass. The substrate stays mechanically legible. Callouts, title block, and hero overlays feel like shop-document markup that has lifted off the paper just enough to prove state and hierarchy.
+The design now reads like a precision drawing sitting on a dim office/drafting desk, with active details projected out of the paper. The substrate stays mechanically legible as ink on paper. Station detail media and labels should feel like a controlled holographic inspection projection rising from the 2D drawing, not like a retro HUD printed on a black screen.
 
 Reject generic SaaS cards, cream landing-page tropes, glassmorphism, purple-neon developer theatrics, and anything that makes software look like the primary identity. The mechanical work is the first signal.
 
 - Full-screen, pinned camera composition
-- Native CAD substrate with restrained blue signal color
+- Physical paper/desk environment with restrained blue projection light
 - Mono-first interface language with one display-family exception
-- Active-only callout motion, no decorative always-on churn
+- Active-only projection motion, no decorative always-on churn
 - Manufacturing-first hierarchy, software as supporting evidence
 
 ## Colors
 
-The palette is blueprint-dark with one calibrated signal blue and a single status green for availability.
+The palette is paper-desk neutral with one calibrated signal blue and a single status green for availability. The page should not return to plain black-and-white HUD styling.
 
 ### Primary
 - **Signal Blue** (`oklch(0.70 0.21 255)`): Active targets, leader lines, hero metadata labels, and measurement-like emphasis.
 
 ### Neutral
-- **Blueprint Black** (`oklch(0.12 0.02 245)`): Route background and the visual floor for the whole scene.
+- **Desk Graphite** (`oklch(0.33 0.012 245)`): Route background and the dim office/drafting desk floor.
+- **Drawing Paper** (`oklch(0.78 0.012 245)`): Main substrate surface.
+- **Warm Paper Light** (`oklch(0.84 0.018 78)`): Subtle sheet highlight and material warmth.
+- **Blueprint Black** (`oklch(0.12 0.02 245)`): Deepest shadows, plates, and projection contrast.
 - **Raised Drafting Film** (`oklch(0.15 0.02 245 / 0.65)`): Title block panels and lifted annotation surfaces.
 - **Spec Border** (`oklch(0.85 0.02 245 / 0.85)`): High-contrast technical strokes and panel outlines.
 - **Dim Spec Border** (`oklch(0.70 0.02 245 / 0.45)`): Secondary rules, dividers, and inactive scaffolding.
@@ -141,10 +147,10 @@ The palette is blueprint-dark with one calibrated signal blue and a single statu
 
 ## Elevation
 
-Depth is mostly structural, not card-based. The substrate supplies the main 3D read through camera scale and `rotateX`; UI elevation comes from z-lifted detail circles, visible leader lines, and a few restrained glow/shadow treatments. Flat at rest, lifted on activation.
+Depth is mostly structural, not card-based. The substrate supplies the paper plane through camera scale, `rotateX`, sheet shadow, and desk lighting. Active station detail UI now lifts in a fixed screen-space projection layer so text and media stay crisp while the beam visually connects back to the paper origin.
 
 ### Shadow Vocabulary
-- **Active Circle Lift**: use the existing circle ring and shadow stack to separate detail media from the substrate, not to make it look glossy.
+- **Projection Object Lift**: use a visible origin ring, vertical leader, translucent beam, object shadow, and circular media surface to make the station feel projected out of the drawing.
 - **Annotation Panel Lift**: keep title plates and title block on subtle dark-film surfaces with thin borders and low blur only where already established.
 
 ### Named Rules
@@ -159,19 +165,19 @@ The hero is the identity stamp on the drawing, not a landing-page banner.
 - **Supporting UI:** mono superheader, mono cycling subtitle, and a spec strip on `note-bg`
 - **Behavior:** hero text peels away during the first forward whip, then only returns when the camera comes back home
 
-### Detail Circle
+### Station Projection Overlay
 This is the core active station surface.
-- **Shape:** perfect circle (`109px` authored size before camera transforms)
-- **Content:** `engineering-review-loop.mp4` or future media, clipped cleanly, no ornamental framing beyond the established technical rings
-- **State:** only the active station lifts to `z: 75 * S * ZONE_SCALE`; inactive circles stay hidden outside calibration mode
-- **Leader Line:** visible SVG line, high-contrast blue, no fake hand-drawn curves
+- **Shape:** physical 2D origin ring on the paper, translucent projection cone, lifted circular media object, and crisp metadata plate
+- **Content:** station-specific images for A/B/C/D until final 3D media exists
+- **State:** active station only; inactive stations should not render heavy projection UI
+- **Leader Line:** visible blue projection line/beam from the paper origin to the lifted object
+- **Crispness:** readable media, text, and labels belong in screen-space overlay, not in the zoomed substrate layer
 
 ### Station Title Plate
-The station label sits on the right flank of the detail circle and stays out of the media area.
-- **Shape:** micro-radius technical plate
-- **Color:** `chip-blue` plate with dark ink text
-- **Width:** `104px`, fixed so stations read as one system
-- **Behavior:** reveal only with the active station; keep title bars aligned off the circle edge
+The station label is now part of the screen-space projection overlay.
+- **Shape:** square technical metadata plate
+- **Color:** dark raised drafting film with signal-blue identifiers
+- **Behavior:** reveal only with the active projection; do not render readable labels as tiny substrate-space text
 
 ### Title Block
 The title block is a compact technical proof panel, not a profile card.
@@ -191,12 +197,15 @@ The bottom-center prompt is a quiet operational cue.
 ### Do:
 - **Do** keep `/drawing-package` as a standalone pinned route where the viewport is the camera and the substrate moves.
 - **Do** keep the native `Lower Receiver_Final.svg` substrate and its `RENDER_SCALE = 2` oversampling path as the baseline visual contract.
-- **Do** gate ProjectZone intros from `active`, preserve equal circle sizing, keep the right-flank title plates, and keep the SVG leader lines visible at active stations.
+- **Do** keep active station readable UI in `StationProjectionOverlay` so text/media are screen-crisp and projected from the paper origin.
+- **Do** preserve the physical paper/desk environment and projection-beam metaphor established by the `2d-to-3d.png` reference.
 - **Do** use Remotion only for offline MP4/WebM media such as the detail-circle loop, never for runtime navigation or UI composition.
 - **Do** preserve the manufacturing-first hierarchy: mechanical work first, software as supporting proof.
 
 ### Don't:
 - **Don't** reintroduce a regular vertical page, scroll-scrubbed `ScrollTrigger` navigation, or a homepage shell around this route.
+- **Don't** revert the route to plain black background with white linework and floating HUD labels.
+- **Don't** put readable station text/media back into the zoomed substrate layer; that is the known pixelation failure.
 - **Don't** use generic Wix/Squarespace developer portfolio patterns with gradient cards, glassmorphism, or "I'm passionate about building things" copy.
 - **Don't** use SaaS-cream landing-page styling: beige backgrounds, pill-shaped buttons, rounded-everything, generic icon grids, or three-column feature cards.
 - **Don't** drift into overly techy dark-mode neon styling that makes the page read software-first and treats mechanical work as a footnote.

@@ -26,13 +26,13 @@ S85 Caveman mode activated. User requested terse, direct communication style. (M
 
 **Role:** Senior Creative Technologist and GSAP Architect.
 
-**Architecture:** The drawing package page is a standalone pinned spatial web route, not a normal vertical page. The viewport is the camera. Wheel, key, and touch input step an event-driven GSAP state machine between authored camera stops while the native SVG substrate translates, scales, and tilts underneath. UI stations are absolute React components on the `1625×1075` substrate; `ProjectZone` and `TitleBlockStation` reveal from `active`, not from scroll position.
+**Architecture:** The drawing package page is a standalone pinned spatial web route, not a normal vertical page. The viewport is the camera. Wheel, key, and touch input step an event-driven GSAP state machine between authored camera stops while the native SVG substrate translates, scales, and tilts underneath. Substrate stations are absolute React components on the `1625×1075` map; `ProjectZone` now acts as the active 2D origin marker in `projectionMode`, while readable station media/text is rendered by a fixed screen-space `StationProjectionOverlay` so it stays crisp and appears projected out of the paper drawing.
 
 **Rules:**
 - Keep the viewport pinned; move the substrate, not the user.
 - Do not reintroduce `ScrollTrigger` or any scroll-position-driven runtime navigation for `/drawing-package`.
 - Keep Remotion out of the interactive UI. Remotion is only for offline MP4/WebM media rendered into station detail circles.
-- Keep the manufacturing-first blueprint/mechanical drawing aesthetic. Do not introduce generic SaaS/card styling.
+- Keep the manufacturing-first mechanical drawing aesthetic. The current environment is a physical paper-on-desk projection diorama, not a plain black HUD and not generic SaaS/card styling.
 - New spatial stations must reveal from explicit active-state orchestration. `IntersectionObserver` is no longer the runtime trigger path.
 - Use Playwright or Chrome DevTools for browser verification. The native agent browser is not reliable in this worktree.
 - Update `.continue-here.md`, `DESIGN.md`, and this context when station coordinates or rig decisions change.
@@ -44,7 +44,8 @@ S85 Caveman mode activated. User requested terse, direct communication style. (M
 - Asset: `Lower Receiver_Final.svg`
 - Native viewBox: `1625 × 1075`
 - Render path: `RENDER_SCALE = 2`, then counter-scale the image back into the native substrate box so camera math stays in SVG-native coordinates
-- Background linework: white-on-transparent SVG, no runtime `invert(1)` or `mix-blend-screen`
+- Background linework: preserve white-on-transparent `Lower Receiver_Final.svg`; runtime filter is currently `invert(1) contrast(1.05) saturate(0.12)` with multiply blending so the drawing reads as dark ink on paper
+- Environment: `.drawing-substrate-paper` provides the physical paper plane, grid/noise texture, and sheet shadow; the route background reads as a dim office/drafting desk
 - DOF blur states:
   - Initial/rest: `blur(0px)`
   - Whip transit: temporary blur only during travel timelines
@@ -101,15 +102,16 @@ All camera stops are authored as substrate-native targets and converted through 
 - The native SVG substrate and oversampled render path are the current sharpness baseline. Preserve `Lower Receiver_Final.svg` and `RENDER_SCALE = 2` unless a verified browser pass proves a better replacement.
 - `ProjectZone` `active` is the canonical trigger. `TitleBlockStation` follows the same pattern.
 - ProjectZone detail circles are intentionally equalized in screen size across A/B/C/D, with station-specific `circleScale` compensation to counter perspective distortion.
-- Station title plates belong on the right flank of the circle. Do not move them back over the media.
-- Visible SVG leader lines are part of the live visual contract. Keep them readable at active stations.
-- `engineering-review-loop.mp4` is the current media source for all four ProjectZone circles until station-specific media replaces it.
+- New active station detail UI belongs in `StationProjectionOverlay`, not inside the zoomed substrate. This is the current fix for pixelated station text/media.
+- Projection contract: show a 2D origin ring on the drawing, a visible vertical leader/beam, and a lifted circular object/metadata plate that feels projected from the paper into 3D space.
+- `ProjectZone projectionMode` hides the legacy substrate-space detail circle/media/label while preserving active origin behavior.
+- Station-specific projection images are currently `Billet Receiver Set AR15.webp`, `torque-wrench-03.webp`, `pump-package-04.webp`, and `rendering-06.webp`.
 - Hidden calibration mode exists at `?calibrate=1`; it forces overlays visible and outlines each station box for solving.
 - `useLayoutEffect` remains mandatory for GSAP initial state to avoid refresh flashes.
 - This route remains standalone: no navbar, no theme toggle, no regular homepage sections.
 
 ### Next Implementation Tasks
 
-1. Phase 4 prune, while preserving the calibrated station camera targets, `circleScale` values, right-flank title layout, and visible SVG leader lines.
-2. Replace the shared `engineering-review-loop.mp4` placeholder with station-specific media once the live route is stable.
+1. Verify and tune `StationProjectionOverlay` on Stations B/C/D plus mobile, while preserving calibrated station camera targets.
+2. Phase 4 prune, removing dead duplicate substrates and remaining legacy ProjectZone detail-circle decorations that projection mode makes obsolete.
 3. Hook the Drawing Package page into the main portfolio navigation only after the standalone route stays visually stable.

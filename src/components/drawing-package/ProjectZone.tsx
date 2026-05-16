@@ -35,6 +35,7 @@ export interface ProjectZoneProps {
   imageSrc?: string;
   videoSrc?: string;
   cameraRotateX?: number;
+  projectionMode?: boolean;
   /** Set to true when the camera arrives at this station to trigger the intro animation */
   active?: boolean;
 }
@@ -48,6 +49,7 @@ export function ProjectZone({
   imageSrc,
   videoSrc,
   cameraRotateX = 0,
+  projectionMode = false,
   active,
 }: ProjectZoneProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -66,6 +68,7 @@ export function ProjectZone({
   const calibrationMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('calibrate');
   const circleScaleX = layout.circleScale?.x ?? 1;
   const circleScaleY = layout.circleScale?.y ?? 1;
+  const detailSize = projectionMode ? 24 * S * ZONE_SCALE : DETAIL_CIRCLE_SIZE;
 
   const [lineMath, setLineMath] = useState({ L: 0, x1: 0, y1: 0, x2: 0, y2: 0 });
 
@@ -73,15 +76,19 @@ export function ProjectZone({
   useEffect(() => {
     const updateLine = () => {
       if (!circleRef.current) return;
-      const circleTop = (parseInt(layout.circleStyle.top as string, 10) || 0) * ZONE_SCALE;
-      const circleLeft = (parseInt(layout.circleStyle.left as string, 10) || 0) * ZONE_SCALE;
-      const radius = DETAIL_CIRCLE_SIZE / 2;
-      
-      const cx = circleLeft + radius;
-      const cy = circleTop + radius;
-      
       const anchorX = layout.anchor.x * ZONE_SCALE;
       const anchorY = layout.anchor.y * ZONE_SCALE;
+      const circleTop = projectionMode
+        ? anchorY - detailSize / 2
+        : (parseInt(layout.circleStyle.top as string, 10) || 0) * ZONE_SCALE;
+      const circleLeft = projectionMode
+        ? anchorX - detailSize / 2
+        : (parseInt(layout.circleStyle.left as string, 10) || 0) * ZONE_SCALE;
+      const radius = detailSize / 2;
+
+      const cx = circleLeft + radius;
+      const cy = circleTop + radius;
+
       const dx = cx - anchorX;
       const dy = cy - anchorY;
       const L = Math.sqrt(dx * dx + dy * dy);
@@ -169,13 +176,13 @@ export function ProjectZone({
       .to(
         circleRef.current,
         {
-          scaleX: circleScaleX,
-          scaleY: circleScaleY,
+          scaleX: projectionMode ? 1 : circleScaleX,
+          scaleY: projectionMode ? 1 : circleScaleY,
           opacity: 1,
-          z: DETAIL_Z * ZONE_SCALE,
+          z: projectionMode ? 1 : DETAIL_Z * ZONE_SCALE,
           rotateX: -cameraRotateX,
           rotationZ: 0,
-          duration: 1.2,
+          duration: projectionMode ? 0.62 : 1.2,
           ease: 'expo.out',
         },
         '-=0.4',
@@ -217,7 +224,7 @@ export function ProjectZone({
           opacity: 1,
           rotateX: -cameraRotateX,
           rotationZ: 0,
-          z: DETAIL_Z * ZONE_SCALE,
+          z: projectionMode ? 1 : DETAIL_Z * ZONE_SCALE,
         });
         gsap.set(labelRef.current, { x: 0, yPercent: -50, opacity: 1 });
         gsap.set(textRef.current, { opacity: 1, filter: 'blur(0px)' });
@@ -325,14 +332,21 @@ export function ProjectZone({
         className="absolute rounded-full bg-slate-900/90 backdrop-blur-sm pointer-events-auto flex items-center justify-center flex-col opacity-0 group"
         style={{
           position: 'absolute',
-          top: `${(parseInt(layout.circleStyle.top as string, 10) || 0) * ZONE_SCALE}px`,
-          left: `${(parseInt(layout.circleStyle.left as string, 10) || 0) * ZONE_SCALE}px`,
-          width: `${DETAIL_CIRCLE_SIZE}px`,
-          height: `${DETAIL_CIRCLE_SIZE}px`,
+          top: projectionMode
+            ? `${layout.anchor.y * ZONE_SCALE - detailSize / 2}px`
+            : `${(parseInt(layout.circleStyle.top as string, 10) || 0) * ZONE_SCALE}px`,
+          left: projectionMode
+            ? `${layout.anchor.x * ZONE_SCALE - detailSize / 2}px`
+            : `${(parseInt(layout.circleStyle.left as string, 10) || 0) * ZONE_SCALE}px`,
+          width: `${detailSize}px`,
+          height: `${detailSize}px`,
           border: `${0.5 * S * ZONE_SCALE}px solid oklch(0.70 0.21 255)`,
-          boxShadow: `0 ${4 * S * ZONE_SCALE}px ${10 * S * ZONE_SCALE}px rgba(0,0,0,0.5), 0 0 ${8 * S * ZONE_SCALE}px rgba(59,130,246,0.3), inset 0 0 ${4 * S * ZONE_SCALE}px rgba(59,130,246,0.2)`,
+          boxShadow: projectionMode
+            ? `0 0 ${14 * S * ZONE_SCALE}px rgba(59,130,246,0.65), inset 0 0 ${5 * S * ZONE_SCALE}px rgba(59,130,246,0.4)`
+            : `0 ${4 * S * ZONE_SCALE}px ${10 * S * ZONE_SCALE}px rgba(0,0,0,0.5), 0 0 ${8 * S * ZONE_SCALE}px rgba(59,130,246,0.3), inset 0 0 ${4 * S * ZONE_SCALE}px rgba(59,130,246,0.2)`,
           transformStyle: 'preserve-3d',
           zIndex: 20,
+          display: projectionMode ? 'none' : undefined,
         }}
         data-zone-circle={id}
       >
@@ -367,7 +381,15 @@ export function ProjectZone({
         </div>
 
         {/* Project Image / Video */}
-        <div ref={textRef} className="z-10 opacity-0 absolute rounded-full overflow-hidden" style={{ inset: `${6 * S * ZONE_SCALE}px`, border: `${0.5 * S * ZONE_SCALE}px solid oklch(0.70 0.21 255 / 0.3)` }}>
+        <div
+          ref={textRef}
+          className="z-10 opacity-0 absolute rounded-full overflow-hidden"
+          style={{
+            inset: projectionMode ? 0 : `${6 * S * ZONE_SCALE}px`,
+            border: projectionMode ? 'none' : `${0.5 * S * ZONE_SCALE}px solid oklch(0.70 0.21 255 / 0.3)`,
+            display: projectionMode ? 'none' : undefined,
+          }}
+        >
           {videoSrc ? (
             <video
               src={videoSrc}
@@ -390,41 +412,39 @@ export function ProjectZone({
           )}
         </div>
 
-        {/* Label Box (attached to circle, so it also floats at Z) */}
-        <div 
+        <div
           ref={labelRef}
-          className="absolute opacity-0 bg-slate-900/95 backdrop-blur-sm flex flex-row items-center whitespace-normal group-hover:scale-105 transition-all duration-300 ease-out"
+          className="zone-label-typeset-v1 absolute opacity-0 bg-slate-900/95 backdrop-blur-sm flex flex-row items-center whitespace-normal group-hover:scale-105 transition-all duration-300 ease-out"
           style={{
             top: '50%',
             left: `calc(100% + ${LABEL_GAP}px)`,
             width: `${LABEL_WIDTH}px`,
-            padding: `${2 * ZONE_SCALE}px ${6 * ZONE_SCALE}px`,
-            gap: `${4 * ZONE_SCALE}px`,
+            padding: `${2 * ZONE_SCALE}px ${4.5 * ZONE_SCALE}px`,
+            gap: `${2.75 * ZONE_SCALE}px`,
             border: `${0.5 * S * ZONE_SCALE}px solid oklch(0.70 0.21 255)`,
             boxShadow: `0 ${2 * S * ZONE_SCALE}px ${6 * S * ZONE_SCALE}px rgba(0,0,0,0.5), 0 0 ${4 * S * ZONE_SCALE}px rgba(59,130,246,0.3)`,
             transformStyle: 'preserve-3d',
             zIndex: 30,
+            display: projectionMode ? 'none' : undefined,
           }}
           data-zone-label={id}
         >
           <div
-            className="flex items-center justify-center bg-blue-500 text-slate-900 font-mono font-bold"
+            className="zone-label-typeset-v1__id flex items-center justify-center bg-blue-500 text-slate-900 font-mono font-bold"
             style={{
-              fontSize: `${1.6 * ZONE_SCALE}px`,
-              height: `${2.8 * ZONE_SCALE}px`,
-              minWidth: `${2.8 * ZONE_SCALE}px`,
+              height: `${3.1 * ZONE_SCALE}px`,
+              minWidth: `${3.1 * ZONE_SCALE}px`,
               borderRadius: `${0.4 * ZONE_SCALE}px`,
             }}
           >
             {id}
           </div>
-          <div
-            className="text-slate-100 font-mono font-bold tracking-widest uppercase"
-            style={{ fontSize: `${1.55 * ZONE_SCALE}px`, lineHeight: 1.2 }}
-          >
-            {title}
+          <div className="flex min-w-0 flex-col justify-center" style={{ gap: `${0.8 * ZONE_SCALE}px` }}>
+            <div className="zone-label-typeset-v1__title text-slate-100 font-mono font-bold uppercase">
+              {title}
+            </div>
+            <div className="zone-label-typeset-v1__rule bg-blue-400/70" style={{ width: `${12 * ZONE_SCALE}px`, height: `${0.35 * S * ZONE_SCALE}px` }} />
           </div>
-          {/* Decorative corner accents */}
           <div className="absolute top-0 left-0" style={{ width: `${1.5 * ZONE_SCALE}px`, height: `${1.5 * ZONE_SCALE}px`, borderTop: `${0.5 * S * ZONE_SCALE}px solid oklch(0.80 0.15 255)`, borderLeft: `${0.5 * S * ZONE_SCALE}px solid oklch(0.80 0.15 255)` }} />
           <div className="absolute bottom-0 right-0" style={{ width: `${1.5 * ZONE_SCALE}px`, height: `${1.5 * ZONE_SCALE}px`, borderBottom: `${0.5 * S * ZONE_SCALE}px solid oklch(0.80 0.15 255)`, borderRight: `${0.5 * S * ZONE_SCALE}px solid oklch(0.80 0.15 255)` }} />
         </div>
