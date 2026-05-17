@@ -90,6 +90,12 @@ const PROJECT_STATION_DETAILS = [
     label: 'Forged receiver datum',
     meta: 'DFM · GD&T · Machined fit',
     image: 'Billet Receiver Set AR15.webp',
+    callouts: [
+      { key: 'MATERIAL', val: '7075-T6 ALUMINUM · FORGED RECEIVER' },
+      { key: 'GEOMETRY', val: 'FIT & FUNCTION RESOLVED FOR ASSEMBLY' },
+      { key: 'DRAWINGS', val: 'FULL MFG PACKAGE FOR 5-AXIS CNC' },
+      { key: 'SCOPE', val: 'UPPER, LOWER, BARREL NUT, HANDGUARD' },
+    ],
   },
   {
     id: 'B',
@@ -97,6 +103,12 @@ const PROJECT_STATION_DETAILS = [
     label: 'Spline torque interface',
     meta: 'Fixtures · Load path · Serviceability',
     image: 'torque-wrench-03.webp',
+    callouts: [
+      { key: 'MATERIAL', val: '17-4PH SS & 4340 ALLOY · HARDENED TO 40 HRC' },
+      { key: 'TOLERANCE', val: '±0.0005" ON BORE & SHAFT INTERFACES' },
+      { key: 'PROCESS', val: '7-AXIS MILL-TURN · PLANETARY GEAR ASSEMBLY' },
+      { key: 'OUTCOME', val: 'DFM REVIEW CUT MFG COST BY 22%' },
+    ],
   },
   {
     id: 'C',
@@ -104,6 +116,12 @@ const PROJECT_STATION_DETAILS = [
     label: 'Skid package layout',
     meta: 'Routing · Assembly · Field access',
     image: 'pump-package-04.webp',
+    callouts: [
+      { key: 'ACOUSTIC', val: 'STAGGERED BAFFLES · TORTUOUS PATH DESIGN' },
+      { key: 'STRUCTURE', val: '11 GA STEEL · SHEET METAL + WELDMENTS' },
+      { key: 'ISOLATION', val: 'VIBRATION DECOUPLING · MLV + OPEN CELL FOAM' },
+      { key: 'SYSTEM', val: 'SKIDS, ENCLOSURES, MOUNTS, LIFTING' },
+    ],
   },
   {
     id: 'D',
@@ -111,6 +129,12 @@ const PROJECT_STATION_DETAILS = [
     label: 'Review-ready visual proof',
     meta: 'CAD render · Technical communication',
     image: 'rendering-06.webp',
+    callouts: [
+      { key: 'TOOLS', val: 'PHOTOVIEW 360 · SOLIDWORKS VISUALIZE' },
+      { key: 'QUALITY', val: 'PHOTOREALISTIC PRODUCT RENDERS · HDRI LIT' },
+      { key: 'OUTCOME', val: 'ELIMINATED PHYSICAL MOCKUP COST' },
+      { key: 'USE', val: 'SALES COLLATERAL · DESIGN REVIEW · QC REF' },
+    ],
   },
 ] as const;
 
@@ -189,16 +213,19 @@ function StationProjectionOverlay({
         </div>
       </div>
       <ul className="station-projection__text-list">
-        <li style={{ '--delay': '0ms' } as React.CSSProperties}>
-          <strong style={{ color: 'var(--dp-accent)' }}>{station.id}</strong>
-          <span style={{ letterSpacing: '0.12em' }}>{station.title}</span>
+        <li className="sp-header" style={{ '--delay': '0ms' } as React.CSSProperties}>
+          <strong className="sp-id">{station.id}</strong>
+          <span className="sp-title">{station.title}</span>
         </li>
-        <li style={{ '--delay': '120ms' } as React.CSSProperties}>
-          <span style={{ color: 'var(--dp-text-dim)', letterSpacing: '0.18em' }}>{station.label}</span>
+        <li className="sp-sub" style={{ '--delay': '100ms' } as React.CSSProperties}>
+          {station.label} · {station.meta}
         </li>
-        <li style={{ '--delay': '240ms' } as React.CSSProperties}>
-          <span style={{ color: 'var(--dp-text-dim)', letterSpacing: '0.18em' }}>{station.meta}</span>
-        </li>
+        {station.callouts.map((c, i) => (
+          <li key={c.key} className="sp-callout" style={{ '--delay': `${200 + i * 80}ms` } as React.CSSProperties}>
+            <strong className="sp-ck">{c.key}</strong>
+            <span>{c.val}</span>
+          </li>
+        ))}
       </ul>
     </div>
   );
